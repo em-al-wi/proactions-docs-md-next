@@ -1,0 +1,1041 @@
+---
+sidebar_position: 100
+---
+
+# Release Notes
+
+All notable changes to ProActions are documented in this file.
+
+## Recent Highlights
+
+### What's New in 1.2.0 (upcoming)
+
+- 📊 **Flow Monitor** - Real-time visualization and control of running workflows
+- ⏱️ **Progress Tracking** - Percentage, step-based, and indeterminate progress indicators
+- 🛑 **Cancellation Support** - Stop long-running flows with confirmation dialogs
+- 💬 **Interactive Feedback** - Prompts and actions within the monitor
+- 🔄 **Streaming Content** - Real-time LLM response display
+- 🎨 **Smart Auto-Hide** - Intelligent visibility based on execution state
+- 📄 **Document Lifecycle Steps** - New `SAVE_DOCUMENT` and `CLOSE_DOCUMENT` steps with cross-platform support in Swing and Prime
+- ⚡ **Event-Driven Actions** - New internal event system with action subscriptions and `EMIT_EVENT` / `DISPATCH_EVENT` for trigger-based automation
+
+### What's New in 1.1.0 (latest)
+
+- 🎨 **Interactive Diff** - Review and selectively accept/reject text changes with granular control
+- ⚡ **Inline Steps** - Improved UX with background processing for FORM, USER_SELECT, and SHOW_RESPONSE
+- 🔧 **Swing Integrations** - Native Swing toolbar, object action, and context menu support
+- 🤖 **Enhanced Chat Completion** - Tool calling and improved multimodal support
+- 🔄 **New Control Steps** - BREAK, FOR, TRY, and PARALLEL for advanced workflow logic
+- 🎵 **Audio Playback** - New PLAY_AUDIO step with customizable player
+- 📚 **Prompt Library** - Reuse stored prompts from Swing Prompt Management UI
+
+### Major Features Since 1.0.0
+
+- **Flow Monitor** (1.2.0) - Real-time workflow visualization and control
+- **Interactive Diff** (1.1.0) - Granular change review and selection
+- **Swing Integration** (1.1.0) - Native inline toolbar and action integration
+- **Schema Support** (1.0.11) - Auto-completion and validation for YAML configs
+- **Form Enhancements** (1.0.10) - Rich form components (HTML, Markdown, Diff)
+- **Progress Bars** (1.0.8) - Visual feedback for long-running workflows
+- **Context Menus** (1.0.7) - Text selection and one-click menus
+- **ProActions Hub** - Centralized API key management for 40+ AI providers
+- **Multi-Language Support** - English, Spanish, French, Italian, German
+
+---
+
+## Version History
+
+- [1.2.0 - February, 2026](#120---february-2026) - Flow Monitor, Progress Tracking, Interactive Feedback
+- [1.1.0 - October 24, 2025](#110---october-24-2025) - Interactive Diff, Swing Integration, Enhanced Workflows
+- [1.0.12 - February 7, 2025](#1012---february-7-2025) - Slash Menu, ElevenLabs, Prime 8
+- [1.0.11 - April 28, 2025](#1011---april-28-2025) - Schema Support, YouTube Integration
+- [1.0.10 - February 27, 2025](#1010---february-27-2025) - Form Enhancements, Spanish Language
+- [1.0.9 - January 26, 2025](#109---january-26-2025) - DeepL Write Integration
+- [1.0.8 - December 13, 2024](#108---december-13-2024) - Progress Bars, Dashboard Actions
+- [1.0.7 - November 14, 2024](#107---november-14-2024) - Context Menus, External Config
+- [1.0.6 - October 11, 2024](#106---october-11-2024) - Permissions, DEBUG Step
+- [1.0.5 - September 3, 2024](#105---september-3-2024) - Enhanced Metadata Access
+- [1.0.4 - August 15, 2024](#104---august-15-2024) - Performance Improvements
+- [1.0.3 - August 14, 2024](#103---august-14-2024) - Stability AI Integration
+
+---
+
+## Detailed Release Notes
+
+### 1.2.0 - February 2026
+
+**📊 Flow Monitor**
+
+A comprehensive monitoring system that provides real-time visualization and control of running ProActions workflows:
+
+- **Real-time Visualization**: Monitor displays live progress, current step, and elapsed time for all running flows
+- **Progress Tracking**: Multiple progress types supported:
+  - Percentage-based (0-100%)
+  - Step-based ("3 of 10 steps")
+  - Indeterminate (spinner for unknown duration)
+- **Cancellation Support**: Users can cancel long-running flows with optional confirmation dialogs
+- **Interactive Feedback**: Display prompts, confirmations, and actions directly in the monitor
+- **Streaming Content**: Real-time display of LLM streaming responses as they arrive
+- **Smart Auto-Hide**: Intelligent hiding based on execution state:
+  - Never hides on errors (user must acknowledge)
+  - Never hides with pending interactive prompts
+  - Never hides during streaming
+  - Respects user hover and manual close intent
+- **Customization**: Full control over position, theme, visibility, and behavior
+- **Permissions**: User/group/team-based access control
+- **Multi-App Support**: Works seamlessly in both Swing and Prime applications
+
+**Configuration:**
+
+Global configuration:
+
+```yaml
+AI_KIT:
+  MONITOR:
+    enabled: true # Enable monitor globally
+    position: bottom-right # Position on screen
+    theme: dark # Visual theme (dark/light)
+    autoHide: true # Auto-hide when flows complete
+    autoHideDelay: 3000 # Delay before hiding (ms)
+    maxVisible: 5 # Max concurrent executions shown
+    apps: # Which apps to show monitor in
+      - all # Options: swing, prime, all
+    showProgress: true # Show progress bars
+    showStepNames: true # Show current step name
+    showElapsedTime: true # Show elapsed time
+    enableCancellation: true # Allow cancelling flows
+    confirmCancellation: true # Confirm before cancelling
+    renderMarkdown: true # Render markdown in feedback
+```
+
+Action-level override:
+
+```yaml
+- title: 'Long Running Task'
+  monitor:
+    enabled: true
+    showProgress: true
+    confirmCancellation: false
+  flow:
+    - step: HUB_COMPLETION
+      instruction: 'Generate comprehensive report...'
+```
+
+**Use Cases:**
+
+- **Long-running workflows**: Provide visibility into multi-step LLM operations
+- **Batch processing**: Track progress through large datasets
+- **Interactive flows**: Handle user prompts without interrupting execution
+- **Debugging**: Understand workflow execution and identify bottlenecks
+- **User training**: Demonstrate what ProActions is doing in real-time
+
+See the [Flow Monitor Guide](./guides/configuration/flow-monitor.md) for complete documentation.
+
+**⚡ Event-Driven Action Triggers**
+
+- Actions can subscribe to internal events using `events` in action configuration.
+- New `EMIT_EVENT` (`DISPATCH_EVENT`) step emits custom events for automation chains.
+- Trigger policies support `skip`, `queue`, and `parallel` behavior while an action is running.
+- Supported event sources: `aikit`, `system`, `custom`.
+
+**⚠️ BREAKING CHANGE: Client adapter data APIs are now async**
+
+To remove blocking synchronous HTTP requests (Prime), the following `client` methods now need to be executed asynchronously:
+
+- `getBasefolder(storyId, type)`
+- `getUserData(name)`
+- `setUserData(name, data)`
+
+If you use these methods in `SCRIPTING`, migrate to async mode and `await`:
+
+```yaml
+- step: SCRIPTING
+  mode: async
+  script: |
+    const prompts = await client.getUserData('prompts');
+    prompts.push({ id: 'new', text: 'example' });
+    await client.setUserData('prompts', prompts);
+    flowContext.baseFolder = await client.getBasefolder(client.getDocumentId(), 'image');
+    return flowContext;
+```
+
+---
+
+### 1.1.0 - October 24 2025
+
+**🎨 Interactive Diff Component**
+
+A powerful new form component that allows users to review and selectively accept or reject text changes:
+
+- **Interactive Mode**: Click checkboxes and toggles to include/exclude specific changes
+  - Additions: Include or exclude new content
+  - Deletions: Apply or keep original text
+  - Replacements: Choose between previous or new text
+- **Toolbar Controls**:
+- - Zoom in/out for better readability
+  - Accept All / Reject All buttons for bulk operations
+  - Customizable button symbols and positioning
+- **Real-time Updates**: Result text recalculates as selections change
+
+Example usage:
+
+```yaml
+- step: FORM
+  form:
+    diffField:
+      type: 'diff'
+      mode: 'words'
+      prevText: '{{ flowContext.original }}'
+      text: '{{ flowContext.improved }}'
+      interactive: true
+      showDeletions: true
+      diffControls:
+        position: 'top'
+        zoom: true
+        acceptRejectAll: true
+```
+
+Perfect for AI text improvement workflows, translation review, and grammar correction tools.
+
+**⚡ Inline Steps Feature**
+
+Improved user experience for UI steps with background processing:
+
+- **FORM**, **USER_SELECT**, and **SHOW_RESPONSE** now support `inlineSteps`
+- Modal displays immediately with loading indicator
+- Background steps execute while modal is visible
+- Results seamlessly populate the UI when processing completes
+- Customizable loading messages via `loadingText` configuration
+- Error handling displays errors in-place within the modal
+
+Example usage:
+
+```yaml
+- step: USER_SELECT
+  inlineSteps:
+    - step: HUB_COMPLETION
+      instruction: 'Generate 6 creative headlines for: {textContent}'
+      response_format: 'list'
+  promptText: 'Select a headline'
+  enableKeyboardControl: true
+```
+
+This eliminates perceived wait time for long-running LLM calls and provides immediate user feedback.
+
+**🔧 Swing Integration System**
+
+Native integration with Swing Web Client UI components:
+
+- **inlineMenu**: Add buttons to the inline editor toolbar
+  - Appears when editing content in report, story, or DWP contexts and selecting text.
+  - Supports conditional visibility and enablement via expressions
+  - Configuration: `label`, `icon`, `allowReadOnly`, `isEnabled`, `isActive`
+
+- **objectAction**: Add actions to the object three dots menu (e.g. in search results or preview)
+  - Works across a lot of contexts
+
+- **contextMenu**: Add items to right-click context menus
+  - Appears in Explorer and other contexts
+  - Same configuration options as objectAction
+
+Example configuration:
+
+```yaml
+- title: 'Shorten Selection'
+  swing:
+    inlineMenu:
+      enable: true
+      icon: 'fa fa-compress'
+      label: 'Shorten'
+      allowReadOnly: false
+      isEnabled: "{{ ctx.activeDocument.getSelection().getNode().elementName == 'p' }}"
+  flow:
+    - step: HUB_COMPLETION
+      instruction: 'Shorten this text: {selectedText}'
+    - step: REPLACE_TEXT
+      at: CURSOR
+```
+
+**⚠️ BREAKING CHANGE: New Deployment Structure**
+
+ProActions now uses a **single unified bundle** for deployment. The old multi-file structure is no longer supported:
+
+**Old Structure (v1.0.x):**
+
+```
+~/methode-servlets/conf/swing/com.eidosmedia.swing.web-app/app/plugins/
+├── pro-actions-core/
+│   ├── pro-actions-bundle.js
+│   ├── pro-actions-command.js
+│   └── pro-actions-config.js
+└── pro-actions-ext-ai-kit/
+    └── proactions-ai-kit.js
+```
+
+**New Structure (v1.1.0+):**
+
+```
+~/methode-servlets/conf/swing/com.eidosmedia.swing.web-app/app/plugins/
+└── pro-actions/
+    ├── pro-actions-{version}.js    (single bundle file)
+    └── pro-actions-config.js       (configuration file)
+```
+
+**Migration Steps:**
+
+1. **Backup configuration**:
+   - Save a copy of `plugins/pro-actions-core/pro-actions-config.js`
+
+2. **Remove old files**:
+   - Delete `plugins/pro-actions-core/` directory
+   - Delete `plugins/pro-actions-ext-ai-kit/` directory
+
+3. **Install new bundle**:
+   - Create `plugins/pro-actions/` directory
+   - Copy `pro-actions-{version}.js` from the release package
+   - Copy your backed-up `pro-actions-config.js` to `plugins/pro-actions/`
+
+4. **Verify configuration**:
+   - Review `pro-actions-config.js` for any path references (usually none needed)
+   - Restart your Swing client to load the new bundle
+
+**Benefits:**
+
+- Simplified deployment with single bundle file
+- Reduced complexity in installation process
+- Easier version management and updates
+- Consistent file structure across installations
+
+**⚠️ TEXT_MENU Deprecation**
+
+The TEXT_MENU component is now **deprecated** in favor of Swing's native `inlineMenu` integration:
+
+- Using TEXT_MENU in recent Swing versions will show both the inline toolbar and TEXT_MENU
+- The two components are not compatible and create a poor user experience
+- **Action Required**: Migrate your TEXT_MENU configurations to use `swing.inlineMenu`
+- TEXT_MENU will be removed in a future version
+
+Migration example:
+
+```yaml
+# OLD - Deprecated
+TEXT_MENU:
+  story:
+    items:
+      - type: 'button'
+        icon: 'fa fa-icon'
+        title: 'My Action'
+        flowRef: 'My Action'
+    # ...
+
+# NEW - Recommended
+title: 'My Action'
+swing:
+  inlineMenu:
+    enable: true
+    icon: 'fa fa-icon'
+    label: 'My Action'
+```
+
+**🤖 Enhanced Chat Completion Steps**
+
+Significant improvements to all chat completion steps (OPENAI_COMPLETION, HUB_COMPLETION, etc.):
+
+- **Tool/Function Calling**:
+  - Define custom functions that the LLM can invoke during conversation
+  - Functions can execute ProActions workflow steps, scripts, or templates
+  - Support for required and optional parameters
+  - Multi-turn conversations with tool results
+
+  ```yaml
+  - step: OPENAI_COMPLETION
+    instruction: 'Ask the user a question using the tool askUser'
+    functions:
+      - name: askUser
+        description: 'Ask the user a question'
+        required_params: ['question']
+        steps:
+          - step: USER_PROMPT
+            promptText: '{{ flowContext.question }}'
+  ```
+
+- **Binary Input/Output Support**:
+  - Audio input support for speech-capable models
+  - Audio output support with automatic playback
+  - Image input improvements with better multimodal handling
+  - Base64 and blob handling for all media types
+
+- **Structured Outputs**:
+  - Enhanced `response_format` with `json_object` option.
+
+- **Configuration Improvements**:
+  - Support for conversation history via `messages` array
+
+**📚 Prompt Library Integration**
+
+Reuse and centrally manage prompts:
+
+- Reference stored prompts using `promptId` configuration
+- Prompts managed in Swing Prompt Management UI
+- Supports both system and user prompts
+- Variable resolution works within stored prompts
+- Reduces duplication and improves governance
+
+Example:
+
+```yaml
+- step: OPENAI_COMPLETION
+  promptId: 'd112a306-8f7a-43bc-8f38-94161b6a91cd'
+  # All other configurations remain available
+```
+
+**🔄 New Control Flow Steps**
+
+Advanced workflow control capabilities:
+
+- **BREAK**: Exit loops conditionally
+
+  ```yaml
+  - step: WHILE
+    condition: '{{ flowContext.counter < 10 }}'
+    do:
+      - step: SET
+        counter: '{{ flowContext.counter + 1 }}'
+      - step: BREAK
+        condition: '{{ flowContext.counter == 5 }}'
+  ```
+
+- **FOR**: Numeric and array iteration
+
+  ```yaml
+  # Numeric iteration
+  - step: FOR
+    var: 'i'
+    start: 1
+    end: 5
+    do:
+      - step: SET
+        item: '{{ flowContext.i }}'
+
+  # Array iteration
+  - step: FOR
+    var: 'item'
+    items: '{{ flowContext.myList }}'
+    do:
+      - step: SET
+        current: '{{ flowContext.item }}'
+  ```
+
+- **TRY**: Error handling with catch blocks
+
+  ```yaml
+  - step: TRY
+    try:
+      - step: SET
+        value: '{{ riskyOperation }}'
+    catch:
+      - step: SET
+        error: '{{ flowContext.error }}'
+        fallbackValue: 'default'
+  ```
+
+- **PARALLEL**: Execute multiple step sequences concurrently
+
+  ```yaml
+  - step: PARALLEL
+    steps:
+      - # Branch 1
+        - step: HUB_COMPLETION
+          instruction: 'Generate headline'
+      - # Branch 2
+        - step: HUB_COMPLETION
+          instruction: 'Generate summary'
+  ```
+
+**🎵 New Steps**
+
+- **PLAY_AUDIO**: Display a customizable floating audio player
+  - Supports data URLs, HTTP URLs, and base64 audio
+  - Configurable theme (dark/light or custom colors)
+  - Position control (9 anchor positions)
+  - Progress bar, volume controls, and time display
+  - Autoplay support with browser compatibility fallbacks
+  - Draggable player with Shadow DOM isolation
+
+  ```yaml
+  - step: PLAY_AUDIO
+    in: '{{ flowContext.audioDataUrl }}'
+    autoplay: true
+    theme: 'dark'
+    position: 'bottom-right'
+    showProgress: true
+    showVolume: true
+  ```
+
+- **BASE64_TO_BLOB**: Convert base64 strings to blobs
+  - Essential for handling binary data in workflows
+  - Supports custom MIME types
+  - Integrates with other steps requiring blob inputs
+
+**📝 FORM Enhancements**
+
+- **formConfig**: New configuration object for FORM step behavior
+  - Control modal sizing and appearance (width, height, dialogSize)
+  - Fullscreen mode support
+  - Typography customization (fonts, line heights)
+
+  ```yaml
+  - step: FORM
+    title: 'Large Review Form'
+    formConfig:
+      dialogSize: 'xl'
+      height: '80vh'
+      diffFontSize: '14px'
+    form:
+      reviewField:
+        type: 'diff'
+        mode: 'words'
+        prevText: '{{ flowContext.original }}'
+        text: '{{ flowContext.improved }}'
+  ```
+
+  See [Forms and Inputs Guide](./guides/configuration/forms-and-inputs.md#modal-configuration) for complete formConfig options.
+
+- **Textarea Resize**: Enhanced textarea component
+  - `rows` configuration for initial height
+  - `resize` option: `none`, `vertical`, `horizontal`, `both`
+  - Better control over form layout
+
+  ```yaml
+  - step: FORM
+    form:
+      notes:
+        type: 'textarea'
+        rows: 10
+        resize: 'vertical'
+  ```
+
+**🎯 USER_SELECT Keyboard Control**
+
+- **enableKeyboardControl**: Navigate selection lists with keyboard
+  - Arrow keys for navigation
+  - Enter to select
+  - Escape to cancel
+  - Improves accessibility and power-user workflows
+
+  ```yaml
+  - step: USER_SELECT
+    enableKeyboardControl: true
+    promptText: 'Choose an option'
+  ```
+
+**🔐 Admin Actions**
+
+- **admin** flag: Mark actions as administrative
+  - Hidden from regular command palette
+  - Requires typing the full action name to access
+  - Useful for configuration reload, cache clearing, debugging tools
+  - Prevents accidental execution of sensitive operations
+
+  ```yaml
+  - title: 'Reload Configuration'
+    admin: true
+    flow:
+      - step: # Reload steps
+  ```
+
+**✨ Conditional Visibility with Templates**
+
+- **isAvailable** now supports Nunjucks template expressions
+  - Use `{{ }}` syntax for dynamic conditions
+
+  ```yaml
+  - title: 'Report Action'
+    isAvailable: "{{ ctx.activeObject.getInfo().type == 'EOM::CompoundStory' }}"
+  ```
+
+**Additional Improvements**
+
+- JSON schema updates for all new features
+- New document lifecycle operations available in workflows and scripts:
+  - `SAVE_DOCUMENT` step supports optional `close` behavior
+  - `CLOSE_DOCUMENT` step closes the current document
+  - Scripting API now supports `client.saveDocument({ close: true })` and `client.closeDocument()`
+
+### 1.0.12 - February 7, 2025
+
+**🎯 Slash Menu**
+
+The new slash menu brings Notion-style command access to ProActions:
+
+- Type `/` anywhere in the editor to open the slash menu
+- Configuration consistent with TEXT_MENU and ONECLICK_MENU
+- Provides quick access to actions without keyboard shortcuts
+
+**New Steps**
+
+- **END_IF** - Conditionally terminate flow execution
+- **SANITIZE** - Validate and repair XML content
+  - Essential for AI-generated XML where validity is uncertain
+  - Can automatically fix common XML issues
+- **ELEVENLABS_TTS** - ElevenLabs Text-to-Speech integration
+- **ELEVENLABS_STT** - ElevenLabs Speech-to-Text integration
+
+**Enhanced Features**
+
+- **HUB_YOUTUBE_UPLOAD**
+  - Now supports uploading video thumbnails
+  - Improved video upload workflow
+
+- **Méthode XML to Markdown**
+  - New `client.xmlToMarkdown(xml)` function
+  - Simplifies content export and preview
+
+**Prime 8 Integration**
+
+- Full integration with Prime 8 Command Palette framework
+- Specialized visualization for Prime 8
+- **CHANGE_VIEW_SIZE** step to control palette sizing
+
+**ProActions Financial Services**
+
+New client functions for financial services integration:
+
+- `client.getContainerTextContent()` - Fetch full report text in Swing and Prime
+- `client.getContainerXmlContents()` - Retrieve XML and LOIDs for all report sections
+- Enhanced `client.getTextContent()` - Returns selected section text
+- Enhanced `client.getXmlContent()` - Returns selected section XML
+
+**Improvements**
+
+- `client.isReadonly()` now checks if active user holds the lock on the active object
+
+---
+
+### 1.0.11 - April 28, 2025
+
+**🎓 Schema Support**
+
+Created and registered ProActions AI-Kit schema for enhanced development:
+
+- Auto-completion for configuration files
+- Real-time validation
+- Inline documentation
+- Registered at [schemastore.org](https://schemastore.org)
+- Reduces configuration errors significantly
+
+**Configuration Enhancements**
+
+_Actions and Sections:_
+
+- **`app` attribute** - Specify if action/section is for "swing" or "prime"
+- **`category` attribute** - Set sub-category for better organization in Prime Panel
+- **`hiddenInPanel` attribute** - Hide specific actions in Prime Panel
+- **`sectionIcon` attribute** - Custom icon for sections in Prime Panel
+- **`panelContext` attribute** - Specify context actions for selected elements
+
+**YouTube Integration**
+
+New steps for YouTube video management:
+
+- **HUB_YOUTUBE_AUTH_INIT** - Initialize OAuth 2.0 authentication
+- **HUB_YOUTUBE_AUTH_STATUS** - Check authentication status
+- **HUB_YOUTUBE_AUTH_LOGOUT** - Logout authenticated accounts
+- **HUB_YOUTUBE_UPLOAD** - Upload videos to YouTube
+
+**User Data Persistence**
+
+New client functions for user profile data:
+
+- `getUserData()` - Retrieve stored user data
+- `setUserData()` - Save user-specific data for future sessions
+
+**Development Support**
+
+- **Training Mode** - Load configs from local development server
+- Enable with `trainingMode` configuration
+- Use with [proactions-dev](https://github.com/em-al-wi/proactions-dev)
+
+**Prime Enhancements**
+
+- Improved XML management with `getXmlAtXpath` and `replaceXmlAtXpath`
+- Better XML insert location support
+- Improved read-only state detection using `IsModifyable()`
+
+**Step Improvements**
+
+- **CLIPBOARD** - Browser compatibility fallbacks
+- **FORM**
+  - Key-value pairs for select options and radio items
+  - New form components: datetime, color, range
+- **REST** - `formData` attribute for multipart form data
+
+**Branding**
+
+- Product name changed to "Eidosmedia ProActions" (formerly "Swing ProActions")
+
+---
+
+### 1.0.10 - February 27, 2025
+
+**📝 Enhanced Forms**
+
+New FormComponents for richer user interfaces:
+
+- **headline** - Section headers in forms
+- **html** - Rich HTML content display
+- **markdown** - Markdown rendering in forms
+- **diff** - Side-by-side text comparison
+- **hr** - Horizontal rules for visual separation
+- **Custom buttons** - Define multiple action buttons
+
+**New Steps**
+
+- **MARKDOWN_TO_HTML** - Transform Markdown to HTML format
+
+**Enhanced Steps**
+
+- **USER_SELECT**
+  - `infoTitle` attribute for additional context
+  - `infoText` attribute for descriptive information above list
+
+- **SCRIPTING**
+  - Now supports asynchronous JavaScript execution
+  - Greater workflow flexibility
+
+- **SHOW_RESPONSE**
+  - HTML response rendering support
+
+**Language Support**
+
+- ✨ **Spanish Translation** - ProActions now available in Spanish
+- Supported languages: English, Spanish, French, Italian, German
+
+**Context Handling**
+
+- Multiple contexts support in sections and actions
+- Improved fallback mechanisms for Swing 5.2022.10
+- Context support added for Prime
+- Better context detection across platforms
+
+**Editor Protection**
+
+- Steps that modify content now check for read-only mode:
+  - INSERT_TEXT, INSERT_XML
+  - REPLACE_TEXT, REPLACE_XML
+  - INSERT_LIST
+
+**Text and Oneclick Menu**
+
+- `forElement` configuration now supports "DummyText"
+
+**Maintenance**
+
+- Updated all dependencies to latest versions
+
+---
+
+### 1.0.9 - January 26, 2025
+
+**DeepL Write Integration**
+
+- **New Step: DEEPL_WRITE** - Send text for improvement to DeepL
+- Enables text refinement and optimization
+- Note: DeepL Write API does not support XML format text
+
+**INSERT_XML and INSERT_LIST Enhancements**
+
+New **position** parameter for flexible insertion:
+
+- `insertInline` (default) - Insert at cursor position
+- `insertBefore` - Insert before cursor context
+- `insertAfter` - Insert after cursor context
+- Effective in Swing when `at` is set to `"CURSOR"`
+
+---
+
+### 1.0.8 - December 13, 2024
+
+**📊 Progress Bar Element**
+
+Visual feedback for long-running workflows:
+
+- **SHOW_PROGRESS** - Display progress bar
+- **UPDATE_PROGRESS** - Update progress state
+- **HIDE_PROGRESS** - Hide progress bar
+- Auto-hides on workflow completion or error
+
+**Dashboard Actions**
+
+- AI-Kit now supports dashboard actions
+- New **context** configuration for actions and sections
+- Ensures actions only visible in relevant contexts
+- ⚠️ **Action Required**: Add `context:` config for context-specific actions
+
+**Translation Management**
+
+- Translations now built into solution
+- ⚠️ **Action Required**: Remove standalone locale files
+
+**One-Click Menu Enhancement**
+
+- New `forTags` configuration option
+- Define menu appearance based on parent tags
+
+**Content Filtering**
+
+- Optional parameters for `client.getTextContent` and `client.getXmlContent`
+- `GetTextContentOptions` - Filter returned content
+- `GetXmlContentOptions` - Filter returned XML
+- Example: Exclude specific tags from content
+
+**Minor Updates**
+
+- **Hide sections** - Hide all actions within a section
+- **Azure OpenAI** - Updated IMAGE_GENERATION API version to `2024-10-01-preview`
+- **client.getContext()** - New function to identify user's current context
+
+---
+
+### 1.0.7 - November 14, 2024
+
+**🎨 Context-Based Menus**
+
+Two new highly configurable menus:
+
+_Text Selection Menu:_
+
+- Appears when text is selected
+- Quick access to text-specific actions
+- Fully customizable per context
+- Permission-based visibility
+
+_One-Click Menu:_
+
+- Appears on left side of content items
+- Activated when cursor is placed inside content
+- Context-sensitive actions
+- Per-action permissions
+
+**External Configuration Management**
+
+- **!include directive** - Include external SysConfig files
+- Modular configuration management
+- Better organization and maintainability
+- Example: `!include /SysConfig/ProActions/services.yaml`
+
+**New Steps**
+
+- **CLEAR_SELECTION** - Clear text selection without replacement
+- Useful before INSERT_TEXT or INSERT_XML steps
+
+**Stability AI Enhancement**
+
+- **SEARCH_AND_RECOLOR** - Identify and recolor image components
+- Uses Stability AI's recoloring model
+
+**LLM Response Format**
+
+- **response_format** option for OpenAI ChatGPT and Google Gemini
+- Enforce JSON response structure
+- Custom schema support
+- Alias `list` for JSON list enforcement
+
+**Step Improvements**
+
+- **DOWNLOAD** - Now supports downloading blobs
+- **INSERT_LIST / TO_LIST** - Improved list parsing logic
+  - Removes double newlines
+  - Cleaner list generation
+
+---
+
+### 1.0.6 - October 11, 2024
+
+**🎤 Speech Services**
+
+- New Text-to-Speech (TTS) models from OpenAI and Azure OpenAI
+- High-quality voice synthesis
+- Multiple voice options
+
+**Document Metadata**
+
+- New placeholders for document name and issue date
+- Enhanced client functions for metadata access
+
+**🔒 Permissions System**
+
+Configure access control for sections and actions:
+
+- `forUsers` - User-level permissions
+- `forGroups` - Group-level permissions
+- `forTeams` - Team-level permissions
+
+**New Steps**
+
+- **DEBUG** - Write flowContext to developer console
+- Creates breakpoint for debugging
+- Essential for workflow troubleshooting
+
+**Templating Engine**
+
+- Integrated Mozilla's Nunjucks templating engine
+- Enhanced string handling
+- Powerful placeholder system
+
+**Step Enhancements**
+
+- **IF, WHILE, SWITCH** - New `condition` attribute
+  - Supports string placeholders with Nunjucks
+  - More flexible conditional logic
+
+- **SET, SWITCH** - Simplified syntax
+  - Replaced name/expression attributes with key-value pairs
+  - Cleaner configuration
+
+**User Experience**
+
+- **Instant Actions** - Execute on ProActions icon click
+- Improved workflow initiation
+
+**Technical Updates**
+
+- Removed deprecated DOMSubtreeModified MutationEvent
+- Better cursor location monitoring
+
+---
+
+### 1.0.5 - September 3, 2024
+
+**New Steps**
+
+- **DOWNLOAD_TEXT** - Download text content from flow
+- **WRITE_CLIPBOARD** - Write to user clipboard
+
+**FILE_UPLOAD Enhancement**
+
+- New output types: `text` and `arrayBuffer`
+- More flexible file handling
+
+**Dynamic Placeholders**
+
+- `reportId` - Report identifier
+- `reportLoid` - Report LOID
+- `reportUuid` - Report UUID
+
+**API Enhancements**
+
+- Access Metadata, System Metadata, Usage Tickets, Virtual Attributes
+- Support for both story and report (container) contexts
+
+---
+
+### 1.0.4 - August 15, 2024
+
+**Performance Improvements**
+
+- Faster placeholder resolution
+- Asynchronous configuration loading
+- Improved overall responsiveness
+
+---
+
+### 1.0.3 - August 14, 2024
+
+**🎨 Stability AI Integration**
+
+New steps for image processing:
+
+- **STABILITY_AI_UPSCALE** - Enhance image resolution
+- **STABILITY_AI_OUTPAINT** - Extend image boundaries
+- **STABILITY_AI_SEARCH_AND_REPLACE** - Find and replace in images
+
+**Placeholder Improvements**
+
+- Option to omit text when variable cannot be resolved
+- More graceful handling of missing variables
+
+**Flow Control**
+
+- Continue flow even when `then` or `else` block is missing
+- More resilient conditional execution
+
+**INSERT_LIST Enhancement**
+
+- Add entries to existing lists
+- More flexible list management
+
+**REST Step Enhancement**
+
+- Store response object in variable
+- `requestOptions` configuration
+- More control over REST calls
+
+**API Functions**
+
+- `getSiteConfigString()` - Read from siteConfiguration
+- Better integration with Méthode configuration
+
+**New Placeholders**
+
+- `uuid` - Document UUID
+- `loid` - Document LOID
+- `appName` - Application name (swing/prime)
+
+---
+
+## Migration Notes
+
+### Upgrading to 1.1.0
+
+**⚠️ TEXT_MENU Deprecation (Action Required)**
+
+- Migrate all TEXT_MENU configurations to use `swing.inlineMenu`
+- Using TEXT_MENU in recent Swing versions causes UI conflicts
+- TEXT_MENU will be removed in a future version
+
+Migration steps:
+
+1. Identify all actions using TEXT_MENU configuration
+2. Replace with `swing.inlineMenu` configuration
+3. Test in your Swing environment
+4. Remove TEXT_MENU sections from configuration
+
+**New Features**
+
+- All new features are opt-in and backward compatible
+- Interactive diff available in FORM step with `type: 'diff'`
+- Inline steps can be added to existing FORM, USER_SELECT, and SHOW_RESPONSE steps
+- Swing integrations work alongside existing action definitions
+- New control flow steps (BREAK, FOR, TRY, PARALLEL) available immediately
+
+**Recommended Actions**
+
+- Consider using `inlineSteps` for actions with LLM calls to improve UX
+- Explore interactive diff for text improvement workflows
+- Review admin actions and add `admin: true` flag where appropriate
+- Update `isAvailable` conditions to use Nunjucks templates for better readability
+
+### Upgrading to 1.0.12
+
+- No breaking changes
+- New features are opt-in
+- Consider enabling Slash Menu for improved UX
+
+### Upgrading to 1.0.11
+
+- Schema support requires VS Code YAML extension update
+
+### Upgrading to 1.0.8
+
+- Remove standalone ProActions locale files (now built-in)
+- Add `context:` configuration to context-specific actions
+
+---
+
+## Getting Help
+
+- **Documentation**: See [Getting Started Guide](./getting-started/your-first-flow.md)
+- **Issues**: Check existing issues or report new ones
+- **Community**: Join ProActions Developer Community
+- **Support**: Contact Eidosmedia support team
