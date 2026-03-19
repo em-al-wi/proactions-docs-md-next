@@ -14,10 +14,16 @@ All notable changes to ProActions are documented in this file.
 - ⏱️ **Progress Tracking** - Percentage, step-based, and indeterminate progress indicators
 - 🛑 **Cancellation Support** - Stop long-running flows with confirmation dialogs
 - 💬 **Interactive Feedback** - Prompts and actions within the monitor
-- 🔄 **Streaming Content** - Real-time LLM response display
+- 🔄 **Streaming Content** - Real-time LLM response display as it arrives
 - 🎨 **Smart Auto-Hide** - Intelligent visibility based on execution state
 - 📄 **Document Lifecycle Steps** - New `SAVE_DOCUMENT` and `CLOSE_DOCUMENT` steps with cross-platform support in Swing and Prime
 - ⚡ **Event-Driven Actions** - New internal event system with action subscriptions and `EMIT_EVENT` / `DISPATCH_EVENT` for trigger-based automation
+- 🤖 **Agent Skills** - Load reusable skill instructions from the server into AI completion steps
+- 🛠️ **Built-in AI Tools** - Ready-made tools for document access, user interaction, and metadata; no custom function definitions required
+- 🔌 **MCP Integration** - Call MCP server tools directly from flows with `HUB_MCP_TOOLS` and `HUB_MCP_INVOKE` steps
+- 🏗️ **Block Drop Integration** - Trigger actions automatically when blocks are dropped in the Swing editor (`onBlockDrop`)
+- 🧩 **New Control & Utility Steps** - `PLATFORM`, `GET_ZONES`, `GET_PURE_TEXT`, `TAG_PURE_TEXT`, `CLEAR_TAGS`
+- ⚙️ **Section-Level Configuration** - Override `monitor` and other settings at section level
 
 ### What's New in 1.1.0 (latest)
 
@@ -32,6 +38,10 @@ All notable changes to ProActions are documented in this file.
 ### Major Features Since 1.0.0
 
 - **Flow Monitor** (1.2.0) - Real-time workflow visualization and control
+- **Agent Skills** (1.2.0) - Reusable AI instruction sets loaded from the server
+- **Built-in AI Tools** (1.2.0) - Ready-made tools for AI function calling
+- **MCP Integration** (1.2.0) - Call MCP tools directly from flows or expose to AI
+- **Block Drop Integration** (1.2.0) - Trigger flows on drag-and-drop in Swing editor
 - **Interactive Diff** (1.1.0) - Granular change review and selection
 - **Swing Integration** (1.1.0) - Native inline toolbar and action integration
 - **Schema Support** (1.0.11) - Auto-completion and validation for YAML configs
@@ -45,7 +55,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Version History
 
-- [1.2.0 - February, 2026](#120---february-2026) - Flow Monitor, Progress Tracking, Interactive Feedback
+- [1.2.0 - March, 2026](#120---march-2026) - Flow Monitor, Agent Skills, Built-in AI Tools, MCP Integration, Block Drop
 - [1.1.0 - October 24, 2025](#110---october-24-2025) - Interactive Diff, Swing Integration, Enhanced Workflows
 - [1.0.12 - February 7, 2025](#1012---february-7-2025) - Slash Menu, ElevenLabs, Prime 8
 - [1.0.11 - April 28, 2025](#1011---april-28-2025) - Schema Support, YouTube Integration
@@ -62,7 +72,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Detailed Release Notes
 
-### 1.2.0 - February 2026
+### 1.2.0 - March 2026
 
 **📊 Flow Monitor**
 
@@ -84,6 +94,8 @@ A comprehensive monitoring system that provides real-time visualization and cont
 - **Customization**: Full control over position, theme, visibility, and behavior
 - **Permissions**: User/group/team-based access control
 - **Multi-App Support**: Works seamlessly in both Swing and Prime applications
+- **Keyboard Shortcuts**: Navigate flows and dismiss the monitor without leaving the keyboard
+- **Auto-Scroll**: Automatically scrolls to the bottom of the monitor log as new messages arrive, with a dedicated scroll-to-bottom button
 
 **Configuration:**
 
@@ -121,6 +133,21 @@ Action-level override:
       instruction: 'Generate comprehensive report...'
 ```
 
+Section-level override:
+
+```yaml
+AI_KIT:
+  SECTIONS:
+    - section: 'My Section'
+      monitor:
+        enabled: false # Disable monitor for all actions in this section
+      actions:
+        - title: 'Quick Action'
+          flow:
+            - step: SHOW_NOTIFICATION
+              message: 'Done'
+```
+
 **Use Cases:**
 
 - **Long-running workflows**: Provide visibility into multi-step LLM operations
@@ -137,6 +164,162 @@ See the [Flow Monitor Guide](./guides/configuration/flow-monitor.md) for complet
 - New `EMIT_EVENT` (`DISPATCH_EVENT`) step emits custom events for automation chains.
 - Trigger policies support `skip`, `queue`, and `parallel` behavior while an action is running.
 - Supported event sources: `aikit`, `system`, `custom`.
+
+See the [Swing Integration Guide](./guides/configuration/swing-integration.md) for full documentation on event-driven triggers.
+
+**🤖 Agent Skills**
+
+Skills are reusable instruction sets stored on the server that can be dynamically loaded into AI completion steps at runtime. This separates prompt engineering from flow configuration and makes instruction sets reusable across multiple actions.
+
+- Skills are stored as `SKILL.md` files in `/SysConfig/ProActions/Skills/<skillName>/`
+- Reference documents (e.g., style guides, terminology lists) can be stored under `<skillName>/references/`
+- When loaded, skills are injected into the system prompt automatically
+- A built-in `read_skill_reference` tool is exposed to the AI so it can retrieve reference documents on demand
+- The base path for skills is configurable via `skillsBasePath` in `pro-actions-config.js`
+
+```yaml
+- step: HUB_COMPLETION
+  behavior: 'You are a writing assistant.'
+  instruction: 'Improve this article: {textContent}'
+  skills:
+    - editorial-style    # Loads /SysConfig/ProActions/Skills/editorial-style/SKILL.md
+    - seo-guidelines     # Loads /SysConfig/ProActions/Skills/seo-guidelines/SKILL.md
+```
+
+**🛠️ Built-in AI Tools**
+
+ProActions now provides a library of pre-configured tools that can be enabled for AI function calling without writing custom function definitions. These tools give the LLM direct access to document content, metadata, and user interaction.
+
+- **Content tools**: `getTextContent`, `getXmlContent`, `getTextAtXpath`, `replaceTextAtCursor`, `insertXmlAtCursor`, and many more
+- **Document info tools**: `getDocumentId`, `getMetadata`, `getWorkflowStatus`, `getChannel`, etc.
+- **Container tools**: For container (report/DWP) documents
+- **User interaction tools**: `askSingleChoice`, `askMultipleChoice`, `askFreeformQuestion`, `askConfirmation` — pause the AI and prompt the user directly from the monitor
+- **Tool aliases**: Define virtual tools with preset arguments to simplify what the AI sees
+- **Alias templates**: Share configuration across multiple aliases using `aliasTemplate` / `extend`
+- **Auto-discovery**: Use `autoDiscoverTools: true` to let the model discover and activate available tools on demand
+
+```yaml
+- step: HUB_COMPLETION
+  instruction: 'Classify the article and update its metadata'
+  builtinTools:
+    - ContentTools
+    - DocumentInfoTools
+    - alias: getHeadline
+      target: getTextAtXpath
+      args:
+        xpath: '/doc/story/headline'
+```
+
+See the [Built-in AI Tools Reference](./guides/configuration/builtin-ai-tools.md) for the complete tool catalog.
+
+**🔌 MCP (Model Context Protocol) Integration**
+
+Connect to MCP servers via ProActions Hub and expose their tools to LLMs or invoke them directly from flows.
+
+- **`HUB_MCP_TOOLS`**: List all available tools from an MCP server
+- **`HUB_MCP_INVOKE`**: Directly invoke an MCP tool from a flow step (without an LLM)
+- Use `builtinTools` with `mcp:` entries to expose MCP tools to an AI completion step
+
+```yaml
+# Invoke an MCP tool directly
+- step: HUB_MCP_INVOKE
+  server: filesystem
+  tool: read_file
+  arguments:
+    path: '/documents/template.md'
+
+# Expose MCP tools to an LLM
+- step: HUB_COMPLETION
+  instruction: 'Read and summarize the template'
+  builtinTools:
+    - mcp: 'filesystem'
+      only: ['read_file']
+```
+
+See the [AI Integration Guide](./guides/configuration/ai-integration.md#model-context-protocol-mcp-tools) for full documentation.
+
+**🔄 Streaming LLM Responses**
+
+OpenAI completion steps now support streaming mode. Tokens from the LLM are displayed in the Flow Monitor in real time as they arrive, providing immediate feedback for long completions.
+
+- Streaming works with both plain text and JSON (`response_format: 'json_object'`) responses
+- Tool call streaming is also supported
+- Streaming is transparent — the final `flowContext.text` / `flowContext.object` output is identical to non-streaming mode
+- The monitor's auto-hide behaviour is respected during streaming (the monitor stays open until the response is complete)
+
+**🏗️ Block Drop Integration (Swing)**
+
+Trigger ProActions flows automatically when a block element is dropped in the Swing editor. This enables powerful automation for drag-and-drop scenarios such as cross-story copies, channel migrations, and version restores.
+
+```yaml
+- title: 'Auto-translate Dropped Content'
+  hidden: true
+  swing:
+    onBlockDrop:
+      enable: true
+      runWhen:
+        isCrossStory: true
+      when: "options.sourceLanguage !== options.targetLanguage"
+  flow:
+    - step: DEEPL_TRANSLATE
+      instruction: '{{ flowContext._dropInfo.xmlContent | safe }}'
+      target_lang: '{{ flowContext._dropInfo.targetLanguage }}'
+    - step: REPLACE_XML
+      at: CURSOR_PARAGRAPH
+```
+
+Drop information is available via `flowContext._dropInfo` (blockType, xmlContent, textContent, sourceLanguage, targetLanguage, isCrossStory, etc.).
+
+See the [Swing Integration Guide](./guides/configuration/swing-integration.md#block-drop-integration) for all configuration options.
+
+**🧩 New Steps**
+
+- **`PLATFORM`**: Route flow execution to platform-specific branches (`swing`, `prime`, `standalone`) with an optional `default` fallback. Enables writing portable flows that behave differently depending on where they run.
+
+  ```yaml
+  - step: PLATFORM
+    swing:
+      - step: REPLACE_TEXT
+        at: CURSOR
+    prime:
+      - step: SHOW_RESPONSE
+        title: 'Result'
+    default:
+      - step: SHOW_NOTIFICATION
+        message: '{{ flowContext.text }}'
+  ```
+
+- **`GET_ZONES`**: Retrieve zone and linked document information from a DWP or Report. The result is stored in `flowContext.object` as an array of zone descriptors.
+
+- **`GET_PURE_TEXT`**: Extract plain text from the document with XML tags removed and optional character normalization. Useful when you need clean, AI-consumable text without markup.
+
+- **`TAG_PURE_TEXT`**: Mark segments of text in the document with a virtual or real XML tag. Useful for highlighting AI-identified segments (e.g., claims for fact-checking, passages for review).
+
+- **`CLEAR_TAGS`**: Remove all virtual tags that were previously added by `TAG_PURE_TEXT`.
+
+**⚙️ Step Improvements**
+
+- **`SCRIPTING` — `returnAs` option**: Treat the script body as an expression and assign the result directly to a `flowContext` variable, without needing an explicit `return` statement. Useful for concise one-liner scripts.
+
+  ```yaml
+  - step: SCRIPTING
+    script: flowContext.items.filter(i => i.active).length
+    returnAs: activeCount
+  ```
+
+- **`SANITIZE` — `normalizeCharacters`**: New option to normalize typographic characters (curly quotes, em dashes, etc.) to their ASCII equivalents during sanitization.
+
+- **`SHOW_RESPONSE` — Markdown mode**: Render the response as formatted Markdown in the modal dialog instead of plain text, enabling richer formatted output.
+
+- **`FORM` step**: The `FORM` step now has full schema support, documentation, and examples. All field types and form configuration options are validated.
+
+**🔲 Prime Integration Improvements**
+
+Significant improvements to the Prime adapter:
+
+- `isPageContext` support: Flows can now detect whether they are running in a page context within Prime, enabling page-aware logic.
+- Improved XML read/write operations and context detection across a broader set of Prime editor modes.
+- Better compatibility with the Prime 8 command palette and resizable palette via `CHANGE_VIEW_SIZE`.
 
 **⚠️ BREAKING CHANGE: Client adapter data APIs are now async**
 
@@ -159,7 +342,6 @@ If you use these methods in `SCRIPTING`, migrate to async mode and `await`:
     return flowContext;
 ```
 
----
 
 ### 1.1.0 - October 24 2025
 
