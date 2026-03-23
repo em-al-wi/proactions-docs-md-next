@@ -35,7 +35,7 @@ actions:
       # Step 1: Get the article content and send it to AI
       - step: HUB_COMPLETION
         behavior: |
-          You are an AI assistant helping journalists improve their content.
+          You are an AI assistant helping authors improve their content.
           Suggest 5 creative, engaging headlines based on the article provided.
           Headlines should be under 100 characters.
           Do not use quotation marks unless quoting someone directly.

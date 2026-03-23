@@ -44,7 +44,7 @@ HUB:
   endpoint: "{BASE_URL}/swing/proactions"
   target: openai
   defaultBehavior: |
-    You are an assistant who helps journalists write their content.
+    You are an assistant who helps authors write their content.
     Answer without unnecessary explanations.
     Answer in English unless instructed otherwise.
 ```
@@ -63,7 +63,7 @@ HUB:
   endpoint: "{BASE_URL}/swing/proactions"
   target: openai
   defaultBehavior: |
-    You are an assistant who helps journalists write their content.
+    You are an assistant who helps authors write their content.
 
 DEEPL:
   endpoint: /swing/proactions/proxy/forward/deepl

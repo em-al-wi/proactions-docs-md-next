@@ -457,7 +457,7 @@ actions:
     flow:
       - step: HUB_COMPLETION
         behavior: |
-          You are an AI assistant helping journalists.
+          You are an AI assistant helping authors.
           Rephrase the given text while maintaining meaning.
         instruction: 'Rephrase: {selectedText}'
 

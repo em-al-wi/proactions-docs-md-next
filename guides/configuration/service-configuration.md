@@ -37,7 +37,7 @@ HUB:
   endpoint: "{BASE_URL}/swing/proactions"
   target: openai
   defaultBehavior: |
-    You are an assistant who helps journalists write their content.
+    You are an assistant who helps authors write their content.
     Answer concisely and professionally.
     Answer in English unless instructed otherwise.
 ```
@@ -212,7 +212,7 @@ HUB:
   target: openai
   defaultBehavior: |
     # Role
-    You are an expert assistant for professional journalists.
+    You are an expert assistant for professional authors.
 
     # Guidelines
     - Provide accurate, well-researched information
@@ -233,7 +233,7 @@ HUB_FRENCH:
   endpoint: "{BASE_URL}/swing/proactions"
   target: openai
   defaultBehavior: |
-    Vous êtes un assistant pour les journalistes francophones.
+    Vous êtes un assistant pour les authores francophones.
     Répondez toujours en français avec un style professionnel.
 ```
 
@@ -279,7 +279,7 @@ HUB:
   endpoint: "{BASE_URL}/swing/proactions"
   target: openai
   defaultBehavior: |
-    You are an assistant for professional journalists.
+    You are an assistant for professional authors.
     Provide accurate, concise responses.
     Default to English unless specified otherwise.
 
@@ -303,7 +303,7 @@ HUB:
   endpoint: "{BASE_URL}/swing/proactions"
   target: openai
   defaultBehavior: |
-    You are a professional writing assistant for journalists.
+    You are a professional writing assistant for authors.
 
 # Alternative LLM for specific tasks
 HUB_CLAUDE:
@@ -409,7 +409,7 @@ ELEVENLABS:       # Voice service
 HUB:
   defaultBehavior: |
     # Clear role definition
-    You are an assistant for professional journalists.
+    You are an assistant for professional authors.
 
     # Specific guidelines
     - Provide factual, well-researched information

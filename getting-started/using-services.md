@@ -34,7 +34,7 @@ AI_KIT:
       endpoint: "{BASE_URL}/swing/proactions"
       target: openai
       defaultBehavior: |
-        You are an assistant who helps journalists write their content.
+        You are an assistant who helps authors write their content.
         Answer without unnecessary explanations.
         Answer in English unless instructed otherwise.
 ```
@@ -78,7 +78,7 @@ The most commonly used step for AI interactions:
 ```yaml
 - step: HUB_COMPLETION
   behavior: |
-    You are an expert journalist assistant.
+    You are an expert author assistant.
     Generate engaging content based on the user's request.
   instruction: "Write a headline for this article: {textContent}"
 ```

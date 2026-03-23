@@ -17,7 +17,7 @@ This example demonstrates how to:
 
 ## Use Case
 
-Journalists often need multiple headline options to choose from. This workflow:
+Authors often need multiple headline options to choose from. This workflow:
 
 1. Reads the article content from the current document
 2. Sends it to an AI service with instructions to generate headlines
@@ -44,7 +44,7 @@ actions:
           - step: HUB_COMPLETION
             behavior: |
               # Context
-              You are an AI assistant helping journalists improve their content.
+              You are an AI assistant helping authors improve their content.
 
               # Task
               Your task is to suggest a maximum of 6 creative, engaging, and relevant headlines
@@ -122,7 +122,7 @@ The HUB_COMPLETION step sends the article content to the AI service:
 ```yaml
 - step: HUB_COMPLETION
   behavior: |
-    You are an AI assistant helping journalists improve their content.
+    You are an AI assistant helping authors improve their content.
     Your task is to suggest 6 creative headlines...
   instruction: 'The article content is as follows: {textContent}'
   response_format: 'list'

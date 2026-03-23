@@ -942,7 +942,148 @@ location /swing/proactions/ {
 
 The critical settings are `proxy_buffering off` and disabling compression (`gzip off`, `brotli off`) on the SSE location. Compression algorithms buffer the response body before sending, which defeats streaming.
 
+## Agent Skills
+
+Skills are reusable instruction sets stored on the server that can be dynamically loaded into AI completion steps at runtime. Instead of embedding lengthy guidelines directly in every `behavior` prompt, you write them once as a Skill and reference them by name. This keeps your YAML flows clean and makes it easy to update shared instructions in one place.
+
+### How Skills Work
+
+When a completion step runs, ProActions:
+
+1. Loads each named skill's `SKILL.md` from the server
+2. Injects the skill content at the **beginning of the system prompt** (before `behavior`)
+3. Exposes a `read_skill_reference` tool so the AI can fetch reference documents on demand
+4. Falls back gracefully if a skill fails to load — the completion continues without it
+
+### Directory Structure
+
+Skills are stored under a configurable base path (default: `/SysConfig/ProActions/Skills/`):
+
+```
+/SysConfig/ProActions/Skills/
+├── editorial-style/
+│   ├── SKILL.md              # Required: main instructions
+│   └── references/
+│       ├── style-guide.md    # Optional reference documents
+│       └── forbidden-words.txt
+├── seo-guidelines/
+│   └── SKILL.md
+└── fact-checking/
+    ├── SKILL.md
+    └── references/
+        └── source-list.md
+```
+
+### SKILL.md Format
+
+Each `SKILL.md` supports optional YAML front-matter to control skill behavior:
+
+```markdown
+---
+name: Editorial Style Guide
+description: House style rules for all published content
+loading_mode: immediate   # 'immediate' (default) or 'on_demand'
+---
+
+Always use active voice. Avoid passive constructions.
+Use Oxford commas in all lists.
+Headlines must be in title case.
+Quotes require attribution in the same paragraph.
+```
+
+**Front-matter fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Human-readable name (used in tool descriptions) |
+| `description` | string | Brief purpose of this skill |
+| `loading_mode` | string | `immediate` (inject on load) or `on_demand` (AI fetches via tool) |
+
+**Loading modes:**
+
+- **`immediate`** (default) — the skill body is injected directly into the system prompt when the step starts. Best for short, critical instructions the AI always needs.
+- **`on_demand`** — only the skill's name and description are listed in the system prompt. The AI can call the `read_skill_instruction` tool to fetch the full body when needed. Best for large reference documents that aren't always required.
+
+### Basic Usage
+
+```yaml
+- step: HUB_COMPLETION
+  behavior: 'You are a writing assistant.'
+  instruction: 'Improve this article: {textContent}'
+  skills:
+    - editorial-style
+    - seo-guidelines
+```
+
+Multiple skills are injected in the order listed and concatenated before the `behavior` system prompt.
+
+### Reference Documents
+
+Skills can include reference documents (style sheets, glossaries, source lists, etc.) stored in a `references/` subdirectory. When at least one skill is loaded, ProActions automatically exposes a `read_skill_reference` tool to the AI:
+
+```
+read_skill_reference(skillName, filename)
+```
+
+The AI can call this tool to fetch the content of any reference file it needs during the completion. You do **not** need to configure the tool manually — it is registered automatically.
+
+**Example SKILL.md referencing documents:**
+
+```markdown
+---
+name: Fact Checking Workflow
+description: Guidelines and sources for fact-checking articles
+---
+
+Before publishing, verify all factual claims against approved sources.
+Use read_skill_reference("fact-checking", "source-list.md") to get the
+approved source directory.
+```
+
+### Configuring the Base Path
+
+The default skills location `/SysConfig/ProActions/Skills/` can be changed in your `pro-actions-config.js`:
+
+```javascript
+window.SwingProActionsConfig = {
+  skillsBasePath: '/SysConfig/MyOrg/AISkills/'
+};
+```
+
+Trailing slashes are optional — ProActions normalizes the path automatically.
+
+### Skill Name Validation
+
+Skill names must match the pattern `[A-Za-z0-9_-]+` (letters, numbers, hyphens, underscores only). Invalid names are skipped with a warning logged to the console — they do not abort the flow.
+
+### Combining Skills with Other Configuration
+
+Skills compose naturally with `behavior`, `builtinTools`, `tools`, and all other completion options:
+
+```yaml
+- step: HUB_COMPLETION
+  behavior: 'You are a senior editor.'
+  instruction: 'Review and improve the article: {textContent}'
+  skills:
+    - editorial-style      # Loaded immediately into system prompt
+    - source-guidelines    # on_demand — AI fetches when needed
+  builtinTools:
+    - ContentTools
+    - alias: getHeadline
+      target: getTextAtXpath
+      args:
+        xpath: '/doc/story/grouphead/headline/p'
+  stream: true
+```
+
+### Error Handling
+
+- If a skill file is missing or unreadable, a warning is logged and the skill is silently skipped
+- The completion always proceeds — skill loading failures are non-fatal
+- Very large skills (> 4,000 characters) produce a warning recommending the use of `on_demand` mode or reference documents instead
+
 ## Outputs
+
 
 The completion steps produce various outputs in `flowContext`:
 
@@ -968,7 +1109,7 @@ HUB:
   type: completion
   endpoint: '{BASE_URL}/swing/proactions'
   target: openai
-  defaultBehavior: 'You are a helpful assistant for journalists.'
+  defaultBehavior: 'You are a helpful assistant for authors.'
   options:
     temperature: 0.7
     max_tokens: 800

@@ -20,7 +20,7 @@ This example demonstrates how to:
 
 ## Use Case
 
-Journalists often need to aggregate content from external sources like:
+Authors often need to aggregate content from external sources like:
 
 - Police reports and press releases
 - Government announcements
@@ -98,7 +98,7 @@ actions:
       - step: HUB_COMPLETION
         behavior: |
           # Task
-          You are a journalist tasked with transforming a police report into a polished
+          You are a author tasked with transforming a police report into a polished
           newspaper article. Your goal is to maintain the factual integrity while enhancing
           readability and engagement for the general public.
 

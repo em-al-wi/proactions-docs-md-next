@@ -57,6 +57,28 @@ AI-Link provides OpenAI-compatible endpoints:
 - **Audio Transcription:** `POST /v1/audio/transcriptions`
 - **Audio Translation:** `POST /v1/audio/translations`
 
+## Streaming
+
+The Hub natively proxies Server-Sent Events (SSE) streaming responses. Set `"stream": true` in the request body and the Hub forwards the upstream SSE stream directly to the client.
+
+```bash
+curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-target: openai" \
+  --no-buffer \
+  -d '{
+    "messages": [{"role": "user", "content": "Tell me a short story"}],
+    "stream": true
+  }'
+```
+
+The response uses `Content-Type: text/event-stream` and follows the standard OpenAI streaming format — each event is a `data:` line containing a JSON chunk, terminated by `data: [DONE]`.
+
+**Behaviour:**
+- Client disconnects are detected immediately — the upstream connection is torn down to prevent resource leaks.
+- Streaming requests appear separately in the [Admin Panel](../admin-panel.md) AI-Link metrics (streaming ratio).
+- Errors that occur mid-stream (after headers are sent) are forwarded as a final `data:` error chunk.
+
 ## Target Configuration Structure
 
 Each target in the `targets` array has this structure:

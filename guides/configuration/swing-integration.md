@@ -1177,7 +1177,7 @@ console.log(response.text); // The AI's response
 const response = await aikit.executeChatCompletion(
   "Summarize this article in 3 bullet points",
   {
-    systemPrompt: "You are a helpful assistant for journalists",
+    systemPrompt: "You are a helpful assistant for authors",
     serviceName: "HUB",
     completionType: "HUB_COMPLETION",
     includeFullResponse: true,

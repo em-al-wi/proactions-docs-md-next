@@ -186,6 +186,8 @@ Skills are reusable instruction sets stored on the server that can be dynamicall
     - seo-guidelines     # Loads /SysConfig/ProActions/Skills/seo-guidelines/SKILL.md
 ```
 
+See the [AI Integration Guide — Agent Skills](./guides/configuration/ai-integration.md#agent-skills) for full documentation including loading modes, reference documents, and the base path configuration.
+
 **🛠️ Built-in AI Tools**
 
 ProActions now provides a library of pre-configured tools that can be enabled for AI function calling without writing custom function definitions. These tools give the LLM direct access to document content, metadata, and user interaction.

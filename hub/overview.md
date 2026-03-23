@@ -61,6 +61,15 @@ Host and connect to [Model Context Protocol (MCP)](https://modelcontextprotocol.
 - Dynamic execution of Node.js and Python-based MCP servers
 - Standardized API for tool invocation
 
+### Admin Panel
+
+Built-in browser-based dashboard for operations and diagnostics:
+
+- Real-time AI provider usage metrics (tokens, latency, error rates)
+- MCP server health and per-tool invocation tracking
+- Full runtime configuration viewer (secrets redacted)
+- Secure stateless API key authentication, independent of the main auth system
+
 ### Enterprise Security
 
 Production-ready security features:
@@ -94,6 +103,7 @@ The application consists of modular components:
 - YouTube Module (OAuth and uploads)
 - Tools Module (content extraction)
 - MCP Module (tool gateway)
+- Admin Module (dashboard and diagnostics)
 - Logging Module (centralized logging)
 - Health Module (monitoring endpoints)
 - Common Module (shared guards, providers, middleware)

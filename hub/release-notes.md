@@ -8,6 +8,30 @@ sidebar_label: Hub Release Notes
 
 #### New Features
 
+##### Admin Panel
+
+A new built-in browser-based admin panel for monitoring and diagnostics.
+
+- **Secure authentication** — stateless API key authentication (`auth.admin.apiKeys`) independent of the main auth system; minimum 32-character key requirement; optional IP/CIDR allowlist via `auth.admin.allowedNetworks`
+- **Dashboard** — process information, memory usage, configuration summary, and runtime usage charts
+- **AI-Link metrics** — real-time token usage per provider/model, latency distributions, finish reason breakdowns, and per-action request tables
+- **Proxy usage** — configured proxies and per-proxy request counts
+- **MCP monitoring** — connection status, per-server latency/error metrics, and per-tool invocation counts
+- **Config viewer** — full runtime configuration with sensitive fields automatically redacted
+- **System tab** — Node.js version, uptime, and memory breakdown
+- **Toolbar** — auto-refresh (30 s), manual refresh, statistics reset with confirmation, dark/light mode toggle
+
+See [Admin Panel](./admin-panel.md) for full configuration and API reference.
+
+##### AI-Link - SSE Streaming Support
+
+The AI-Link gateway now natively proxies Server-Sent Events (SSE) streaming responses.
+
+- Set `"stream": true` in the request body to receive a streaming response
+- The Hub forwards the upstream SSE stream directly to the client with proper `text/event-stream` headers
+- Client disconnects are detected and upstream connections are torn down cleanly to prevent resource leaks
+- Streaming requests are tracked separately in the Admin Panel (streaming ratio metric)
+
 ##### MCP Gateway - Remote Server Support
 
 - **HTTP Transport (`transport: http`):**
@@ -36,11 +60,17 @@ sidebar_label: Hub Release Notes
   - Async connection drop detection via transport lifecycle handlers
   - Timer leak fixes in timeout handling
 
+##### MCP Gateway - Server Log Routing
+
+stderr output from `stdio` MCP server subprocesses is now captured and routed through the Hub's structured logger instead of spilling directly to the parent process console. Each line is emitted at `warn` level with the server name and `stream: stderr` metadata, making MCP server diagnostic output visible in your standard log pipeline (file rotation, JSON export, etc.).
+
 #### Documentation
 
 - Updated MCP Gateway documentation with remote transport configuration examples
 - Added transport type comparison table
 - Added security considerations for remote connections
+- Added Admin Panel documentation
+- Added streaming support to AI-Link documentation
 
 ### 1.1.0 - 11/11/2025
 

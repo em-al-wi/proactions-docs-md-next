@@ -70,7 +70,7 @@ Interact with Large Language Models and AI services:
 
 ```yaml
 - step: HUB_COMPLETION
-  behavior: 'You are a helpful assistant for journalists.'
+  behavior: 'You are a helpful assistant for authors.'
   instruction: 'Summarize this article: {textContent}'
   options:
     max_tokens: 150
