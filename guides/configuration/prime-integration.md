@@ -92,7 +92,23 @@ Add the following configuration:
 - `Ctrl+K` (consistent with Swing)
 - `Ctrl+P` (VS Code style)
 
-#### Step 3: Verify Configuration
+#### Step 3: Enable Actions in Configuration
+
+To make an action from a panel using ProActions available in the Prime command palette (Prime 8 only), you must explicitly enable it in your action definition using the `prime` property:
+
+```yaml
+- title: "Generate Summary"
+  hidden: true
+  prime:
+    commandPalette:
+      enable: true
+  flow:
+    # ... workflow steps ...
+```
+
+Using this approach you can register actions from a panel that uses ProActions in the native Prime Command palette. Best practice is to set the action to `hidden: true` to avoid having the actions appear twice in the command palette, or use a separate configuration file for the panel's ProActions configuration.
+
+#### Step 4: Verify Configuration
 
 1. **Restart Prime** to load the new configuration
 2. **Open any document** in Prime

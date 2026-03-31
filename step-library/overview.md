@@ -10,7 +10,15 @@ Browse steps by category:
 ### Browser
 
 
+- **[DIGITAL_PREVIEW](./steps/DIGITAL_PREVIEW.md)** - Triggers the digital preview functionality
+
+- **[DOCUMENT_PANEL_COMMAND](./steps/DOCUMENT_PANEL_COMMAND.md)** - Executes an array of commands in the document preview panel (e.g. CREATE_PDF, CREATE_TOC)
+
 - **[DOWNLOAD](./steps/DOWNLOAD.md)** - Downloads a file constructed from text or an existing Blob. The filename is required.
+
+- **[INSERT_TEMPLATE_SECTION](./steps/INSERT_TEMPLATE_SECTION.md)** - Creates a new section in the document using the specified template path, relative to the currently elected item
+
+- **[PRINT_PREVIEW](./steps/PRINT_PREVIEW.md)** - Triggers the print design preview functionality
 
 - **[READ_CLIPBOARD](./steps/READ_CLIPBOARD.md)** - Reads content from the user clipboard. Prefers HTML content when available, falls back to plain text.
 

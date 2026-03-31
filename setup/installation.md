@@ -67,6 +67,10 @@ If you don't have a `pro-actions-config.js` file, use the one from the release b
 ```javascript
 (() => {
   window.SwingProActionsConfig = {
+    // Custom path to the main AI-Kit configuration file
+    // Defaults to '/SysConfig/pro-actions.ai-kit.yaml'
+    // configPath: '/SysConfig/pro-actions.ai-kit.yaml',
+
     // Fallback keyboard shortcut for opening ProActions
     // (when editor context shortcut is not available)
     openHotkey: 'cmd+k,ctrl+k',

@@ -7,6 +7,49 @@ Steps in the Browser category.
 ## Available Steps
 
 
+### [DIGITAL_PREVIEW](./steps/DIGITAL_PREVIEW.md)
+
+Triggers the digital preview functionality
+
+
+
+
+
+
+**Example:**
+```yaml
+
+- step: DIGITAL_PREVIEW
+
+```
+
+
+---
+
+
+### [DOCUMENT_PANEL_COMMAND](./steps/DOCUMENT_PANEL_COMMAND.md)
+
+Executes an array of commands in the document preview panel (e.g. CREATE_PDF, CREATE_TOC)
+
+
+
+
+
+
+**Example:**
+```yaml
+
+- step: DOCUMENT_PANEL_COMMAND
+  commands:
+    - CREATE_TOC
+    - CREATE_PDF
+
+```
+
+
+---
+
+
 ### [DOWNLOAD](./steps/DOWNLOAD.md)
 
 Downloads a file constructed from text or an existing Blob. The filename is required.
@@ -27,6 +70,48 @@ Downloads a file constructed from text or an existing Blob. The filename is requ
   text: "Some text to download"
 - step: DOWNLOAD
   filename: "hello.txt"
+
+```
+
+
+---
+
+
+### [INSERT_TEMPLATE_SECTION](./steps/INSERT_TEMPLATE_SECTION.md)
+
+Creates a new section in the document using the specified template path, relative to the currently elected item
+
+
+
+
+
+
+**Example:**
+```yaml
+
+- step: INSERT_TEMPLATE_SECTION
+  templatePath: '/Content/Templates/My Awesome Template'
+  insertAfter: true
+
+```
+
+
+---
+
+
+### [PRINT_PREVIEW](./steps/PRINT_PREVIEW.md)
+
+Triggers the print design preview functionality
+
+
+
+
+
+
+**Example:**
+```yaml
+
+- step: PRINT_PREVIEW
 
 ```
 
