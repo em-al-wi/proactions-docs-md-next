@@ -15,7 +15,7 @@ All notable changes to ProActions are documented in this file.
 - 🛑 **Cancellation Support** - Stop long-running flows with confirmation dialogs
 - 💬 **Interactive Feedback** - Prompts and actions within the monitor
 - 🔄 **Streaming Content** - Real-time LLM response display as it arrives
-- 🎨 **Smart Auto-Hide** - Intelligent visibility based on execution state
+- 🎨 **Adaptive Display** - Compact pill for background work, full panel when attention is needed
 - 📄 **Document Lifecycle Steps** - New `SAVE_DOCUMENT` and `CLOSE_DOCUMENT` steps with cross-platform support in Swing and Prime
 - ⚡ **Event-Driven Actions** - New internal event system with action subscriptions and `EMIT_EVENT` / `DISPATCH_EVENT` for trigger-based automation
 - 🤖 **Agent Skills** - Load reusable skill instructions from the server into AI completion steps
@@ -86,11 +86,11 @@ A comprehensive monitoring system that provides real-time visualization and cont
 - **Cancellation Support**: Users can cancel long-running flows with optional confirmation dialogs
 - **Interactive Feedback**: Display prompts, confirmations, and actions directly in the monitor
 - **Streaming Content**: Real-time display of LLM streaming responses as they arrive
-- **Smart Auto-Hide**: Intelligent hiding based on execution state:
-  - Never hides on errors (user must acknowledge)
-  - Never hides with pending interactive prompts
-  - Never hides during streaming
-  - Respects user hover and manual close intent
+- **Adaptive Display**: Starts as a compact pill, expands to a full panel when user attention is needed:
+  - Auto-expands for interactive feedback (prompts, confirmations, choices)
+  - Stays as pill for transient status/debug messages
+  - Completed flows fade after a configurable delay
+  - Errors and summary content keep the pill visible until dismissed
 - **Customization**: Full control over position, theme, visibility, and behavior
 - **Permissions**: User/group/team-based access control
 - **Multi-App Support**: Works seamlessly in both Swing and Prime applications
@@ -106,9 +106,8 @@ AI_KIT:
   MONITOR:
     enabled: true # Enable monitor globally
     position: bottom-right # Position on screen
-    theme: dark # Visual theme (dark/light)
-    autoHide: true # Auto-hide when flows complete
-    autoHideDelay: 3000 # Delay before hiding (ms)
+    theme: auto # Visual theme (dark/light/auto)
+    completionFadeDelay: 3000 # ms before done-pill fades
     maxVisible: 5 # Max concurrent executions shown
     apps: # Which apps to show monitor in
       - all # Options: swing, prime, all
@@ -247,7 +246,7 @@ OpenAI completion steps now support streaming mode. Tokens from the LLM are disp
 - Streaming works with both plain text and JSON (`response_format: 'json_object'`) responses
 - Tool call streaming is also supported
 - Streaming is transparent — the final `flowContext.text` / `flowContext.object` output is identical to non-streaming mode
-- The monitor's auto-hide behaviour is respected during streaming (the monitor stays open until the response is complete)
+- The monitor stays open during streaming and fades only after the response is complete
 
 **🏗️ Block Drop Integration (Swing)**
 

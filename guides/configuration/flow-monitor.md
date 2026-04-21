@@ -15,7 +15,7 @@ The Flow Monitor is a powerful feature that enhances the user experience when ru
 - **Cancellation Support**: Stop long-running flows with a single click
 - **Interactive Feedback**: Respond to prompts and confirmations without interrupting the flow
 - **Streaming Content**: Watch LLM responses appear in real-time
-- **Smart Auto-Hide**: Monitor appears when needed and hides when done
+- **Adaptive Display**: Compact pill for background work, full panel when you need it
 - **Customizable**: Control position, theme, and behavior to match your preferences
 
 
@@ -42,9 +42,8 @@ AI_KIT:
   MONITOR:
     enabled: true # Enable monitor globally
     position: bottom-right # Position on screen
-    theme: dark # Visual theme (dark/light)
-    autoHide: true # Auto-hide when flows complete
-    autoHideDelay: 3000 # Delay before hiding (ms)
+    theme: auto # Visual theme (dark/light/auto)
+    completionFadeDelay: 3000 # ms before done-pill fades
     maxVisible: 5 # Max concurrent executions shown
     apps: # Which apps to show monitor in
       - all # Options: swing, prime, all
@@ -62,7 +61,7 @@ ProActions supports monitor configuration at three levels:
 
 1. **Global Configuration** (`MONITOR`):
    - Controls default behavior for all flows
-   - Includes UI settings: `position`, `theme`, `autoHide`, `autoHideDelay`, `maxVisible`, `apps`
+   - Includes UI settings: `position`, `theme`, `completionFadeDelay`, `maxVisible`, `apps`
    - Includes behavioral settings: `showProgress`, `showStepNames`, `showElapsedTime`, `enableCancellation`, `confirmCancellation`, `renderMarkdown`
    - Includes permissions: `forUsers`, `forGroups`, `forTeams`
    - `enabled` can be `true`, `false`, or `'ondemand'`
@@ -120,22 +119,22 @@ MONITOR:
 
 Visual appearance:
 
-- `dark` (default): Dark theme with light text
+- `auto` (default): Follows the system/app color scheme
+- `dark`: Dark theme with light text
 - `light`: Light theme with dark text
 
 ```yaml
 MONITOR:
-  theme: dark
+  theme: auto
 ```
 
-#### autoHide
+#### completionFadeDelay
 
-Whether to automatically hide the monitor when no flows are running:
+How long (in milliseconds) a completed flow's done-pill remains visible before fading out. Only applies when the flow finishes without summary content (`preventAutoHide` feedback keeps the pill visible until dismissed).
 
 ```yaml
 MONITOR:
-  autoHide: true
-  autoHideDelay: 3000 # Wait 3 seconds before hiding
+  completionFadeDelay: 3000 # Fade after 3 seconds
 ```
 
 #### maxVisible
@@ -211,7 +210,7 @@ Override monitor settings for specific actions:
 - `confirmCancellation`: boolean - Confirm before cancelling
 - `renderMarkdown`: boolean - Render markdown in feedback messages
 
-**Note:** Action-level `monitor` cannot control UI properties like `position`, `theme`, `autoHide`, etc. Those are global-only settings.
+**Note:** Action-level `monitor` cannot control UI properties like `position`, `theme`, `completionFadeDelay`, etc. Those are global-only settings.
 
 ### Section-Level Configuration
 
@@ -416,12 +415,9 @@ aikit.monitor.toggle(); // Returns true if now visible
 aikit.monitor.configure({
   position: 'bottom-left',
   theme: 'light',
-  autoHide: false,
+  completionFadeDelay: 5000,
   maxVisible: 10,
 });
-
-// Reset position (if dragged off-screen)
-aikit.monitor.resetPosition();
 
 // Check active executions
 const count = aikit.monitor.getActiveCount();
@@ -530,15 +526,22 @@ Display numerical metrics with labels:
     }, 'Content Analysis');
 ```
 
-### Smart Auto-Hide
+### Display Modes
 
-The monitor intelligently decides when to hide:
+The monitor operates in two display modes that transition automatically based on content:
 
-- Never hides if there are errors (user must acknowledge)
-- Never hides if interactive prompts are pending
-- Never hides while streaming content
-- Never hides while user is hovering over it
-- Respects manual close intent for 5 minutes
+- **Pill** — compact floating capsule shown during background work (icon + title + progress + elapsed time)
+- **Panel** — full monitor with feedback messages, interactive prompts, and streaming content
+
+**Mode transitions are content-driven:**
+
+- Flow starts → pill
+- Interactive prompt / streaming / structured data arrives → auto-expands to panel
+- User clicks pill → panel
+- User clicks minimize (−) → pill
+- Flow completes without summary content → done-pill fades after `completionFadeDelay`
+- Flow completes with `preventAutoHide` feedback → stays visible until dismissed
+- Flow errors → error pill stays visible, click opens panel
 
 ### Cancellation Handling
 
@@ -563,17 +566,16 @@ When a user cancels a flow:
 - Check permission settings (`forUsers`, `forGroups`, `forTeams`)
 - Ensure you're not in a context where monitor is disabled
 
-### Monitor Stays Visible
+### Monitor Stays Visible After Completion
 
-**Problem**: Monitor doesn't auto-hide after flows complete.
+**Problem**: Completed flow pill doesn't fade as expected.
 
 **Solutions**:
 
-- Check `autoHide` is set to `true`
-- Look for error messages (monitor never auto-hides on errors)
-- Check if interactive prompts are pending
-- Verify no streaming content is active
-- Try manually closing and reopening
+- Check `completionFadeDelay` is set to a reasonable value (default: 3000 ms)
+- Error pills remain visible until dismissed — check for errors in the flow
+- Flows with `preventAutoHide` feedback stay visible until the user dismisses them
+- Interactive prompts keep the panel open until the user responds
 
 ### Cancellation Not Working
 
@@ -603,10 +605,10 @@ When a user cancels a flow:
 
 **Solutions**:
 
-- Set `theme: 'dark'` or `theme: 'light'` explicitly
+- Set `theme: 'dark'` or `theme: 'light'` explicitly to override auto-detection
+- `theme: 'auto'` (default) follows the system/app color scheme — check your OS/browser theme settings
 - Clear browser cache
 - Check for CSS conflicts
-- Verify theme setting isn't overridden at action level
 
 ## Best Practices
 
@@ -626,7 +628,7 @@ When a user cancels a flow:
 
 ### User Experience
 
-- Set reasonable `autoHideDelay` (3-5 seconds)
+- Set a reasonable `completionFadeDelay` (3000–5000 ms) so users can see completion status
 - Enable `confirmCancellation` for destructive operations
 - Use `renderMarkdown` for formatted feedback messages
 - Position monitor where it doesn't obstruct content

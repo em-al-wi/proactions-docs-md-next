@@ -20,7 +20,7 @@ Enable tools in your workflow step configuration:
 - step: HUB_COMPLETION
   instruction: "Analyze this document"
   builtinTools:
-    - ContentReadTools      # Enable all tools in this class
+    - ContentTools          # Enable all tools in this class
     - DocumentInfoTools     # Enable all tools in this class
 ```
 
@@ -30,7 +30,7 @@ You can also be more specific:
 - step: HUB_COMPLETION
   instruction: "Analyze this document"
   builtinTools:
-    - class: ContentReadTools
+    - class: ContentTools
       only: [getTextContent, getTextAtXpath]  # Only enable these tools
       xpaths:
         headline: "/doc/story/headline"       # Add xpath aliases
@@ -130,7 +130,6 @@ Get the text content of the current document
 
 
 
-**Returns:** `void`
 
 
 #### `getXmlContent`
@@ -147,7 +146,6 @@ Get the XML content of the current document
 
 
 
-**Returns:** `void`
 
 
 #### `getSelectedText`
@@ -158,7 +156,6 @@ Get the currently selected text in the editor
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getSelectedXML`
@@ -169,7 +166,6 @@ Get the XML of the currently selected content
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getParagraphText`
@@ -180,7 +176,6 @@ Get the text of the current paragraph where the cursor is located
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getParagraphXML`
@@ -191,7 +186,6 @@ Get the XML of the current paragraph where the cursor is located
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getXmlAtXpath`
@@ -208,7 +202,6 @@ Get XML content at a specific XPath location
 
 
 
-**Returns:** `void`
 
 
 #### `getTextAtXpath`
@@ -225,7 +218,6 @@ Get text content at a specific XPath location
 
 
 
-**Returns:** `void`
 
 
 #### `isTextSelected`
@@ -236,7 +228,6 @@ Check if any text is currently selected in the editor
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getSelectedElement`
@@ -247,7 +238,6 @@ Get the name of the currently selected XML element
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getSelectedElementXpath`
@@ -258,7 +248,6 @@ Get the XPath of the currently selected element
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerTextContent`
@@ -269,7 +258,6 @@ Get text content from the container (for container documents)
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerXmlContents`
@@ -280,7 +268,9 @@ Get XML contents from all items in the container
 **Parameters:** None
 
 
-**Returns:** `void`
+
+**Returns:** Array of items, each with the item metadata and its XML string
+
 
 
 #### `insertTextAtCursor`
@@ -297,7 +287,6 @@ Insert text at the current cursor position
 
 
 
-**Returns:** `void`
 
 
 #### `insertTextAtXpath`
@@ -316,7 +305,6 @@ Insert text at a specific XPath location
 
 
 
-**Returns:** `void`
 
 
 #### `insertXmlAtCursor`
@@ -335,7 +323,6 @@ Insert XML at the current cursor position
 
 
 
-**Returns:** `void`
 
 
 #### `insertXmlAtXpath`
@@ -354,7 +341,6 @@ Insert XML at a specific XPath location
 
 
 
-**Returns:** `void`
 
 
 #### `replaceTextAtCursor`
@@ -371,7 +357,6 @@ Replace the selected text at cursor with new text
 
 
 
-**Returns:** `void`
 
 
 #### `replaceTextAtCursorParagraph`
@@ -388,7 +373,6 @@ Replace the entire paragraph at cursor with new text
 
 
 
-**Returns:** `void`
 
 
 #### `replaceTextAtXpath`
@@ -407,7 +391,6 @@ Replace text at a specific XPath location
 
 
 
-**Returns:** `void`
 
 
 #### `replaceXmlAtCursor`
@@ -424,7 +407,6 @@ Replace the selected XML at cursor with new XML
 
 
 
-**Returns:** `void`
 
 
 #### `replaceXmlAtCursorParagraph`
@@ -441,7 +423,6 @@ Replace the entire paragraph XML at cursor with new XML
 
 
 
-**Returns:** `void`
 
 
 #### `replaceXmlAtXpath`
@@ -460,7 +441,6 @@ Replace XML at a specific XPath location
 
 
 
-**Returns:** `void`
 
 
 
@@ -479,7 +459,6 @@ Get the ID of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerLoid`
@@ -490,7 +469,6 @@ Get the LOID of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerUuid`
@@ -501,7 +479,6 @@ Get the UUID of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerObjectType`
@@ -512,7 +489,6 @@ Get the object type of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerWorkflowStatus`
@@ -523,7 +499,6 @@ Get the workflow status of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerProductName`
@@ -534,7 +509,6 @@ Get the product name of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerChannel`
@@ -545,7 +519,6 @@ Get the channel of the container
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerMetadata`
@@ -556,7 +529,6 @@ Get the metadata of the container as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerMetadataString`
@@ -567,7 +539,6 @@ Get the metadata of the container as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerSystemMetadata`
@@ -578,7 +549,6 @@ Get the system metadata of the container as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerSystemMetadataString`
@@ -589,7 +559,6 @@ Get the system metadata of the container as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerVirtualAttributes`
@@ -600,7 +569,6 @@ Get the virtual attributes of the container as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerVirtualAttributesString`
@@ -611,7 +579,6 @@ Get the virtual attributes of the container as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerUsageTickets`
@@ -622,7 +589,6 @@ Get the usage tickets of the container as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getContainerUsageTicketsString`
@@ -633,7 +599,6 @@ Get the usage tickets of the container as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 
@@ -652,7 +617,9 @@ Get the current timestamp in ISO-8601 format.
 **Parameters:** None
 
 
-**Returns:** `ISO-8601 timestamp string.`
+
+**Returns:** ISO-8601 timestamp string.
+
 
 
 #### `getDocumentSummaryInfo`
@@ -663,7 +630,9 @@ Return summary information about the current document.
 **Parameters:** None
 
 
-**Returns:** `Document identifiers and workflow metadata.`
+
+**Returns:** Document identifiers and workflow metadata.
+
 
 
 
@@ -682,7 +651,6 @@ Get the ID of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getDocumentLoid`
@@ -693,7 +661,6 @@ Get the LOID (Logical Object ID) of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getDocumentUuid`
@@ -704,7 +671,6 @@ Get the UUID of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getDocumentName`
@@ -715,7 +681,6 @@ Get the name of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getDocumentIssueDate`
@@ -726,7 +691,6 @@ Get the issue date of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getObjectType`
@@ -737,7 +701,6 @@ Get the object type of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getWorkflowStatus`
@@ -748,7 +711,6 @@ Get the workflow status of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getProductName`
@@ -759,7 +721,6 @@ Get the product name of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getChannel`
@@ -770,7 +731,6 @@ Get the channel of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getMetadata`
@@ -781,7 +741,6 @@ Get the metadata of the current document as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getMetadataString`
@@ -792,7 +751,6 @@ Get the metadata of the current document as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getSystemMetadata`
@@ -803,7 +761,6 @@ Get the system metadata of the current document as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getSystemMetadataString`
@@ -814,7 +771,6 @@ Get the system metadata of the current document as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getVirtualAttributes`
@@ -825,7 +781,6 @@ Get the virtual attributes of the current document as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getVirtualAttributesString`
@@ -836,7 +791,6 @@ Get the virtual attributes of the current document as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUsageTickets`
@@ -847,7 +801,6 @@ Get the usage tickets of the current document as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUsageTicketsString`
@@ -858,7 +811,6 @@ Get the usage tickets of the current document as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `isReadonly`
@@ -869,7 +821,6 @@ Check if the current document is read-only
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getDocumentWorkfolder`
@@ -880,7 +831,6 @@ Get the workfolder of the current document
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 
@@ -909,7 +859,6 @@ Add a feedback message to the execution monitor
 
 
 
-**Returns:** `void`
 
 
 #### `updateProgress`
@@ -928,7 +877,6 @@ Update progress with a percentage (0-100)
 
 
 
-**Returns:** `void`
 
 
 #### `addTableFeedback`
@@ -949,7 +897,6 @@ Display data as a table in the monitor. Example rows: `[{"Metric":"Readability",
 
 
 
-**Returns:** `void`
 
 
 #### `addJsonFeedback`
@@ -970,7 +917,6 @@ Display data as formatted JSON in the monitor
 
 
 
-**Returns:** `void`
 
 
 #### `addKeyValueFeedback`
@@ -989,7 +935,6 @@ Display key-value pairs in the monitor
 
 
 
-**Returns:** `void`
 
 
 #### `addMetricsFeedback`
@@ -1008,7 +953,6 @@ Display metrics (numbers with labels) in the monitor. Provide metrics as a key-v
 
 
 
-**Returns:** `void`
 
 
 #### `showNotification`
@@ -1029,7 +973,6 @@ Show a notification to the user
 
 
 
-**Returns:** `void`
 
 
 #### `highlightTextSegments`
@@ -1054,7 +997,6 @@ Highlight text segments by matching their content in the document, then adding p
 
 
 
-**Returns:** `void`
 
 
 
@@ -1073,7 +1015,6 @@ Get the pure text content of the document or report without any formatting or ma
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `addPureTextTags`
@@ -1092,12 +1033,11 @@ Add tags to pure text content
 
 
 
-**Returns:** `void`
 
 
 #### `clearPureTextTags`
 
-Clear specific tags from from a document or report
+Clear specific tags from a document or report
 
 
 **Parameters:**
@@ -1109,13 +1049,12 @@ Clear specific tags from from a document or report
 
 
 
-**Returns:** `void`
 
 
 
 ## HubMcp
 
-No description provided
+Generic passthrough for invoking MCP tools via the Hub when a specific server/tool pair is not pre-configured as an alias.
 
 ### Tools
 
@@ -1138,7 +1077,55 @@ Execute a tool on an MCP server via the Hub
 
 
 
-**Returns:** `void`
+
+**Returns:** Tool result as JSON string (or raw string if the MCP tool returned a string)
+
+
+
+
+## ToolDiscovery
+
+Meta-tools used by the autoDiscoverTools flow to list available providers and activate them on demand during a completion.
+
+### Tools
+
+
+#### `listAvailableTools`
+
+List all available tool providers and their tools. Returns a catalog with provider names, descriptions, and tool details. Use this to discover what tools can be activated for the current session.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `category` | `string` | No | Optional provider name to filter the catalog to a single provider |
+
+
+
+
+**Returns:** JSON catalog of available tool providers and their tools
+
+
+
+#### `activateTools`
+
+Activate one or more tool providers to make their tools available for this session. Once activated, the tools become directly callable with full typed parameters. Call listAvailableTools first to see available providers and their tools.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `providers` | `array` | Yes | Array of provider names to activate (e.g. ["ContentTools", "FeedbackTools"]) |
+
+
+
+
+**Returns:** JSON: \{ activated: string[], toolCount: number, skipped?: string[] \}
+
 
 
 
@@ -1157,7 +1144,6 @@ Get the username of the current user
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserFullName`
@@ -1168,7 +1154,6 @@ Get the full name of the current user
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserGroups`
@@ -1179,7 +1164,6 @@ Get the groups the current user belongs to
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserTeams`
@@ -1190,7 +1174,6 @@ Get the teams the current user belongs to
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserMetadata`
@@ -1201,7 +1184,6 @@ Get the metadata of the current user as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserMetadataString`
@@ -1212,7 +1194,6 @@ Get the metadata of the current user as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserSystemMetadata`
@@ -1223,7 +1204,6 @@ Get the system metadata of the current user as an object
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 #### `getUserSystemMetadataString`
@@ -1234,7 +1214,6 @@ Get the system metadata of the current user as a string
 **Parameters:** None
 
 
-**Returns:** `void`
 
 
 
@@ -1267,7 +1246,9 @@ Ask the user to select ONE answer from a list of choices. User sees the question
 
 
 
-**Returns:** `JSON: { answerId: string, answerLabel: string, customInput?: string }`
+
+**Returns:** JSON: \{ answerId: string, answerLabel: string, customInput?: string \}
+
 
 
 #### `askMultipleChoice`
@@ -1292,7 +1273,9 @@ Ask the user to select MULTIPLE answers from a list. User sees checkboxes for ea
 
 
 
-**Returns:** `JSON: { selectedIds: string[], selectedLabels: string[], customInput?: string }`
+
+**Returns:** JSON: \{ selectedIds: string[], selectedLabels: string[], customInput?: string \}
+
 
 
 #### `askFreeformQuestion`
@@ -1313,7 +1296,9 @@ Ask the user to type a freeform text answer. User sees a text input field and Su
 
 
 
-**Returns:** `JSON: { answer: string }`
+
+**Returns:** JSON: \{ answer: string \}
+
 
 
 #### `askConfirmation`
@@ -1330,7 +1315,9 @@ Ask the user a yes/no confirmation question. User sees Yes and No buttons.
 
 
 
-**Returns:** `JSON: { confirmed: boolean }`
+
+**Returns:** JSON: \{ confirmed: boolean \}
+
 
 
 
@@ -1357,7 +1344,6 @@ Convert XML content to Markdown format
 
 
 
-**Returns:** `void`
 
 
 #### `markdownToHtml`
@@ -1374,7 +1360,6 @@ Convert Markdown content to HTML
 
 
 
-**Returns:** `void`
 
 
 #### `validateAndRepairXml`
@@ -1391,7 +1376,6 @@ Validate and repair malformed XML
 
 
 
-**Returns:** `void`
 
 
 
