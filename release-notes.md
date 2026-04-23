@@ -447,7 +447,7 @@ Blocks also support **module imports**: include a YAML file with `imports` and r
           ref: imports.translate.flows.toFrench
 ```
 
-See the [Configuration Guide](./setup/configuration.md#reusable-blocks-and-imports-recommended) for the full reference.
+See the [Reusable Blocks Guide](./guides/configuration/reusable-blocks.md) for the full reference.
 
 **🔗 CALL_FLOW and Scoped Flow References**
 

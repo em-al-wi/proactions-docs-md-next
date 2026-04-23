@@ -231,6 +231,8 @@ Migration tip:
 - Existing `TEMPLATES` with `CALL_TEMPLATE.name` continue to work.
 - Migrate gradually to `BLOCKS` + `CALL_FLOW.ref` and `SCRIPTING.scriptRef`.
 
+For full reference — all block types, scope levels, module file format, and error behavior — see [Reusable Blocks](../guides/configuration/reusable-blocks.md).
+
 ### Built-in Variables
 
 ProActions provides variables you can use immediately:
