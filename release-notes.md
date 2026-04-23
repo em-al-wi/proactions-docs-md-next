@@ -8,7 +8,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Recent Highlights
 
-### What's New in 1.2.0 (upcoming)
+### What's New in 1.2.0 (April, 2026)
 
 - 📊 **Flow Monitor** - Real-time visualization and control of running workflows
 - ⏱️ **Progress Tracking** - Percentage, step-based, and indeterminate progress indicators
@@ -24,6 +24,10 @@ All notable changes to ProActions are documented in this file.
 - 🏗️ **Block Drop Integration** - Trigger actions automatically when blocks are dropped in the Swing editor (`onBlockDrop`)
 - 🧩 **New Control & Utility Steps** - `PLATFORM`, `GET_ZONES`, `GET_PURE_TEXT`, `TAG_PURE_TEXT`, `CLEAR_TAGS`
 - ⚙️ **Section-Level Configuration** - Override `monitor` and other settings at section level
+- 📡 **Monitor Interaction Steps** - Eight new `MONITOR_*` steps for interactive prompts and structured data display in the Flow Monitor
+- 🗂️ **Reusable Blocks** - Define constants, variables, flows, and scripts in `BLOCKS` and share them across sections/actions with scoped namespaces
+- 🔗 **CALL_FLOW / Scoped References** - New `CALL_FLOW` step alias and `ref` option to call flows defined in `BLOCKS` by dot-path
+- 🔧 **Custom Template Filters** - Built-in Nunjucks filters for array/object traversal: `pluck`, `find`, `getAttr`, `compact`, `flatten`, `sum`
 
 ### What's New in 1.1.0 (latest)
 
@@ -55,7 +59,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Version History
 
-- [1.2.0 - March, 2026](#120---march-2026) - Flow Monitor, Agent Skills, Built-in AI Tools, MCP Integration, Block Drop
+- [1.2.0 - April 23, 2026](#120---april-23-2026) - Flow Monitor, Agent Skills, Built-in AI Tools, MCP Integration, Block Drop
 - [1.1.0 - October 24, 2025](#110---october-24-2025) - Interactive Diff, Swing Integration, Enhanced Workflows
 - [1.0.12 - February 7, 2025](#1012---february-7-2025) - Slash Menu, ElevenLabs, Prime 8
 - [1.0.11 - April 28, 2025](#1011---april-28-2025) - Schema Support, YouTube Integration
@@ -72,7 +76,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Detailed Release Notes
 
-### 1.2.0 - March 2026
+### 1.2.0 - April 23, 2026
 
 **📊 Flow Monitor**
 
@@ -313,6 +317,180 @@ See the [Swing Integration Guide](./guides/configuration/swing-integration.md#bl
 - **`SHOW_RESPONSE` — Markdown mode**: Render the response as formatted Markdown in the modal dialog instead of plain text, enabling richer formatted output.
 
 - **`FORM` step**: The `FORM` step now has full schema support, documentation, and examples. All field types and form configuration options are validated.
+
+**📡 Monitor Interaction Steps**
+
+Eight dedicated flow steps let you interact with and display data in the Flow Monitor directly from YAML — no scripting required:
+
+_Interactive steps_ — pause the workflow and wait for user input:
+
+- **`MONITOR_STATUS`**: Display a status message in the monitor during execution. Supports message types (`info`, `status`, `warning`, `success`, `error`) and an optional `clear` flag to reset previous messages.
+
+  ```yaml
+  - step: MONITOR_STATUS
+    message: 'Connecting to API...'
+    type: status
+
+  - step: OPENAI_COMPLETION
+    # ...
+
+  - step: MONITOR_STATUS
+    message: 'Done!'
+    type: success
+  ```
+
+- **`MONITOR_CONFIRM`**: Ask the user a Yes/No question. The result is written to `flowContext.confirmed` (boolean) and can be named via `outputs`.
+
+  ```yaml
+  - step: MONITOR_CONFIRM
+    message: 'Publish this article?'
+    confirm: 'Yes, Publish'
+    cancel: 'Not yet'
+    confirmType: success
+
+  - step: IF
+    condition: '{{ flowContext.confirmed }}'
+    then:
+      - step: SHOW_NOTIFICATION
+        message: 'Published!'
+  ```
+
+- **`MONITOR_CHOICE`**: Present a list of labelled options. Supports single and multi-select modes, optional custom text input alongside the choices, and a configurable default.
+
+  ```yaml
+  - step: MONITOR_CHOICE
+    message: 'Select export format:'
+    choices:
+      - id: pdf
+        label: 'PDF Document'
+      - id: docx
+        label: 'Word Document'
+    outputs:
+      - type: text
+        name: format
+  ```
+
+- **`MONITOR_INPUT`**: Collect a single line of text from the user. Supports `placeholder`, `default`, `required`, `maxLength`, and a custom `errorMessage`.
+
+  ```yaml
+  - step: MONITOR_INPUT
+    message: 'Enter a title:'
+    placeholder: 'Breaking News...'
+    required: true
+    outputs:
+      - type: text
+        name: userTitle
+  ```
+
+_Display steps_ — render structured data in the monitor panel (no user input required):
+
+- **`MONITOR_JSON`**: Render an object or array as syntax-highlighted JSON. Optional `title` and `maxDepth`.
+- **`MONITOR_TABLE`**: Render an array of objects as a table. Optional `title` and `maxRows`.
+- **`MONITOR_KEYVALUE`**: Render an object as a labeled key-value list. Optional `title`.
+- **`MONITOR_METRICS`**: Render numerical metrics with labels. Optional `title`.
+
+  ```yaml
+  - step: MONITOR_METRICS
+    title: 'Content Analysis'
+    data:
+      Words: '{{ flowContext.wordCount }}'
+      'Reading Time': '{{ flowContext.readingTime }} min'
+      'Readability Score': '{{ flowContext.score }}/10'
+  ```
+
+See the [Flow Monitor Guide](./guides/configuration/flow-monitor.md) for the full reference on all eight steps.
+
+**🏗️ Reusable Blocks**
+
+A new `BLOCKS` section in `AI_KIT` (and in individual sections/actions) lets you define reusable constants, variables, flows, and scripts that are shared across your configuration without copy-pasting.
+
+- **`constants`**: Static values (strings, numbers) referenced as `{{ global.constants.myValue }}`
+- **`vars`**: Dynamic expressions evaluated at resolve-time
+- **`flows`**: Reusable step sequences callable via `CALL_FLOW`
+- **`scripts`**: Reusable script strings for the `SCRIPTING` step
+
+Blocks are namespaced: `global.*`, `section.*`, `local.*`, and `imports.*` (for imported modules).
+
+```yaml
+AI_KIT:
+  BLOCKS:
+    constants:
+      apiBasePath: /SysConfig/ProActions/lib
+      defaultModel: gpt-4o
+
+  SECTIONS:
+    - section: Editorial
+      blocks:
+        flows:
+          normalize:
+            - step: SANITIZE
+            - step: REPLACE_TEXT
+              at: FULL
+      actions:
+        - title: Normalize Story
+          flow:
+            - step: CALL_FLOW
+              ref: section.flows.normalize
+```
+
+Blocks also support **module imports**: include a YAML file with `imports` and reference its blocks under `imports.<alias>.*`.
+
+```yaml
+- section: Translations
+  imports:
+    - from: '{{ global.constants.apiBasePath }}/translate.module.yaml'
+      as: translate
+  actions:
+    - title: Translate to French
+      flow:
+        - step: CALL_FLOW
+          ref: imports.translate.flows.toFrench
+```
+
+See the [Configuration Guide](./setup/configuration.md#reusable-blocks-and-imports-recommended) for the full reference.
+
+**🔗 CALL_FLOW and Scoped Flow References**
+
+`CALL_TEMPLATE` now has a `CALL_FLOW` alias and a new `ref` option for calling flows defined in `BLOCKS` namespaces. The legacy `name`-based lookup against `TEMPLATES:` continues to work unchanged.
+
+```yaml
+# Legacy — still works
+- step: CALL_TEMPLATE
+  name: 'My Template Name'
+
+# New — scoped reference from BLOCKS
+- step: CALL_FLOW
+  ref: section.flows.normalize
+
+# Dynamic ref resolved at runtime
+- step: CALL_FLOW
+  ref: '{{ flowContext.selectedFlow }}'
+```
+
+The `ref` value is a dot-path into the resolver scope (`global.flows.*`, `section.flows.*`, `local.flows.*`, `imports.<alias>.flows.*`).
+
+**🔧 Custom Template Filters**
+
+ProActions now ships a set of built-in Nunjucks filters for working with objects and arrays directly inside `{{ }}` expressions:
+
+- **`pluck(path)`** — extract a nested property from every item in an array: `{{ flowContext.users | pluck('profile.name') | join(', ') }}`
+- **`find(attr, value)`** — return the first array item where `attr === value`
+- **`getAttr(attr)`** — safely read a property from an object (own properties only, no prototype traversal)
+- **`compact`** — remove falsy values from an array
+- **`flatten`** — flatten one level of nested arrays
+- **`sum(attr?)`** — sum array values (or a numeric attribute of each item)
+
+These can be chained with all standard Nunjucks filters (`upper`, `trim`, `truncate`, `replace`, `join`, etc.).
+
+```yaml
+- step: SET
+  # Extract names of active users and join them into a comma list
+  activeNames: "{{ flowContext.users | find('active', true) | pluck('name') | join(', ') }}"
+  # Compact removes nulls/undefineds before further processing
+  cleanList: "{{ flowContext.rawList | compact | join(' | ') }}"
+```
+
+See the [Nunjucks Templates Guide](./guides/howto/use-nunjucks-templates.md#custom-resolver-filters) for the full filter reference.
 
 **🔲 Prime Integration Improvements**
 

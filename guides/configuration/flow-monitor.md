@@ -279,7 +279,7 @@ With `enabled: 'ondemand'` (default), the monitor only appears for actions that 
 
 ### Monitor Steps
 
-ProActions provides four dedicated steps for monitor interaction:
+ProActions provides eight dedicated steps for monitor interaction — four interactive steps that pause the workflow and wait for user input, and four display steps that render structured data.
 
 #### MONITOR_STATUS
 
@@ -331,6 +331,7 @@ Ask user to select from multiple options:
 - `message`: Prompt asking user to select
 - `choices`: Array of `{id, label}` objects
 - `default`: ID of default/pre-selected choice
+- `selectionMode`: `single` (default) or `multi`
 - `allowCancel`: Show cancel option (default: true)
 
 #### MONITOR_CONFIRM
@@ -340,8 +341,8 @@ Ask user for Yes/No confirmation:
 ```yaml
 - step: MONITOR_CONFIRM
   message: 'Proceed with deletion?'
-  confirmLabel: 'Delete'
-  cancelLabel: 'Cancel'
+  confirm: 'Delete'
+  cancel: 'Cancel'
   outputs:
     - type: text
       name: confirmed
@@ -355,8 +356,10 @@ Ask user for Yes/No confirmation:
 **Properties:**
 
 - `message`: Confirmation question
-- `confirmLabel`: Label for confirm button (default: "Confirm")
-- `cancelLabel`: Label for cancel button (default: "Cancel")
+- `confirm`: Label for confirm button (default: "Confirm")
+- `cancel`: Label for cancel button (default: "Cancel")
+- `confirmType`: Button style — `primary`, `success`, `warning`, `danger` (default: `primary`)
+- `timeout`: Auto-cancel after N seconds if no response
 
 #### MONITOR_INPUT
 
@@ -366,7 +369,7 @@ Ask user for text input:
 - step: MONITOR_INPUT
   message: 'Enter a title:'
   placeholder: 'e.g., Breaking News...'
-  defaultValue: '{{ flowContext.suggestedTitle }}'
+  default: '{{ flowContext.suggestedTitle }}'
   required: true
   outputs:
     - type: text
@@ -377,8 +380,65 @@ Ask user for text input:
 
 - `message`: Prompt asking for input
 - `placeholder`: Placeholder text for input field
-- `defaultValue`: Pre-filled value
+- `default`: Pre-filled value
 - `required`: Whether input is required (boolean)
+- `maxLength`: Maximum number of characters allowed
+
+#### MONITOR_JSON
+
+Render an object or array as syntax-highlighted JSON in the monitor panel:
+
+```yaml
+- step: MONITOR_JSON
+  title: 'API Response'
+  data: '{{ flowContext.object }}'
+  maxDepth: 3
+```
+
+**Properties:** `data` (required), `title`, `maxDepth`
+
+#### MONITOR_TABLE
+
+Render an array of objects as a table:
+
+```yaml
+- step: MONITOR_TABLE
+  title: 'Results'
+  data: '{{ flowContext.list }}'
+  maxRows: 20
+```
+
+**Properties:** `data` (required), `title`, `maxRows`
+
+#### MONITOR_KEYVALUE
+
+Render an object as labeled key-value pairs:
+
+```yaml
+- step: MONITOR_KEYVALUE
+  title: 'Document Info'
+  data:
+    ID: '{{ client.getDocumentId() }}'
+    Author: '{{ client.getMetadata().metadata.general.author }}'
+    Status: '{{ client.getWorkflowStatus() }}'
+```
+
+**Properties:** `data` (required), `title`
+
+#### MONITOR_METRICS
+
+Render numerical metrics with labels:
+
+```yaml
+- step: MONITOR_METRICS
+  title: 'Content Analysis'
+  data:
+    Words: '{{ flowContext.wordCount }}'
+    'Reading Time': '{{ flowContext.readingTime }} min'
+    'Score': '{{ flowContext.score }}/10'
+```
+
+**Properties:** `data` (required), `title`
 
 ### Custom Step Names
 
@@ -688,14 +748,14 @@ When a user cancels a flow:
   flow:
     - step: MONITOR_CONFIRM
       message: 'Are you sure you want to delete this document?'
-      confirmLabel: 'Delete'
-      cancelLabel: 'Cancel'
+      confirm: 'Delete'
+      cancel: 'Cancel'
       outputs:
         - type: text
           name: confirmed
 
     - step: IF
-      condition: "{{ flowContext.confirmed == 'true' }}"
+      condition: "{{ flowContext.confirmed }}"
       then:
         - step: MONITOR_STATUS
           message: 'Deleting document...'
