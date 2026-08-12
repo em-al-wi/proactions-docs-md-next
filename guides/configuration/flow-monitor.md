@@ -16,6 +16,7 @@ The Flow Monitor is a powerful feature that enhances the user experience when ru
 - **Interactive Feedback**: Respond to prompts and confirmations without interrupting the flow
 - **Streaming Content**: Watch LLM responses appear in real-time
 - **Adaptive Display**: Compact pill for background work, full panel when you need it
+- **Auto-Dismiss**: Finished entries can automatically clean themselves up after a configurable delay, keeping the monitor tidy without manual intervention
 - **Customizable**: Control position, theme, and behavior to match your preferences
 
 
@@ -44,6 +45,8 @@ AI_KIT:
     position: bottom-right # Position on screen
     theme: auto # Visual theme (dark/light/auto)
     completionFadeDelay: 3000 # ms before done-pill fades
+    entryFadeDelay: 0 # ms before a finished entry auto-dismisses (0 = disabled)
+    allowEntryDismiss: true # Show a dismiss (×) button on finished entries
     maxVisible: 5 # Max concurrent executions shown
     apps: # Which apps to show monitor in
       - all # Options: swing, prime, all
@@ -62,19 +65,21 @@ ProActions supports monitor configuration at three levels:
 1. **Global Configuration** (`MONITOR`):
    - Controls default behavior for all flows
    - Includes UI settings: `position`, `theme`, `completionFadeDelay`, `maxVisible`, `apps`
-   - Includes behavioral settings: `showProgress`, `showStepNames`, `showElapsedTime`, `enableCancellation`, `confirmCancellation`, `renderMarkdown`
+   - Includes behavioral settings: `showProgress`, `showStepNames`, `showElapsedTime`, `enableCancellation`, `confirmCancellation`, `renderMarkdown`, `entryFadeDelay`, `allowEntryDismiss`
    - Includes permissions: `forUsers`, `forGroups`, `forTeams`
    - `enabled` can be `true`, `false`, or `'ondemand'`
 
 2. **Section-Level Configuration** (`monitor` property):
    - Overrides global settings for all actions in a section
    - Only includes behavioral settings (cannot change position, theme, etc.)
+   - Supports `entryFadeDelay` and `allowEntryDismiss` overrides
    - `enabled` is boolean only (`true` or `false`, NOT `'ondemand'`)
    - All properties are optional
 
 3. **Action-Level Configuration** (`monitor` property):
    - Overrides global and section settings for a specific action
    - Same properties as section-level (behavioral settings only)
+   - Supports `entryFadeDelay` and `allowEntryDismiss` overrides
    - Takes precedence over section and global settings
 
 **Property Inheritance:**
@@ -180,6 +185,46 @@ MONITOR:
   confirmCancellation: true # Show confirmation dialog before cancelling
 ```
 
+#### entryFadeDelay
+
+How long (in milliseconds) a finished entry waits before it auto-dismisses itself from the monitor. The entry plays a brief fade-out animation and collapses smoothly before being removed. A thin animated countdown bar appears at the bottom of the entry so users can see how much time remains.
+
+- Default: `0` (auto-dismiss disabled — entries stay until the whole monitor fades or the user clicks ×)
+- Errors are **never** auto-dismissed regardless of this setting — the user must dismiss them manually
+- Entries with `preventAutoHide` feedback are **never** auto-dismissed
+- Hovering over an entry **pauses** the countdown; moving away resumes it from where it left off
+- Can be overridden per-section or per-action
+
+```yaml
+MONITOR:
+  entryFadeDelay: 5000 # Auto-dismiss finished entries after 5 seconds
+```
+
+To enable auto-dismiss only for a specific action, leave the global default at `0` and set it on the action:
+
+```yaml
+- title: 'Quick Status Check'
+  monitor:
+    enabled: true
+    entryFadeDelay: 3000 # This action's entry dismisses after 3 s
+  flow:
+    - step: HUB_COMPLETION
+      instruction: 'Check status...'
+```
+
+#### allowEntryDismiss
+
+Controls whether a dismiss button (×) is shown on finished entries, letting users remove them manually without waiting for auto-dismiss or the whole-monitor fade.
+
+- Default: `true` — the × button is always visible on completed and cancelled entries
+- Errors show the × button regardless of this setting
+- Set to `false` to remove the button (entries are only cleaned up by auto-dismiss or the whole-monitor fade)
+
+```yaml
+MONITOR:
+  allowEntryDismiss: false # Hide the per-entry dismiss button
+```
+
 ### Action-Level Configuration
 
 Override monitor settings for specific actions:
@@ -209,6 +254,8 @@ Override monitor settings for specific actions:
 - `enableCancellation`: boolean - Allow user to cancel
 - `confirmCancellation`: boolean - Confirm before cancelling
 - `renderMarkdown`: boolean - Render markdown in feedback messages
+- `entryFadeDelay`: number - Auto-dismiss delay in ms for this action's entry (0 = disabled)
+- `allowEntryDismiss`: boolean - Show/hide the × dismiss button for this action's entry
 
 **Note:** Action-level `monitor` cannot control UI properties like `position`, `theme`, `completionFadeDelay`, etc. Those are global-only settings.
 
@@ -600,8 +647,9 @@ The monitor operates in two display modes that transition automatically based on
 - User clicks pill → panel
 - User clicks minimize (−) → pill
 - Flow completes without summary content → done-pill fades after `completionFadeDelay`
+- Flow completes with summary content → entry stays; user can dismiss with × or it auto-dismisses after `entryFadeDelay` (if configured)
 - Flow completes with `preventAutoHide` feedback → stays visible until dismissed
-- Flow errors → error pill stays visible, click opens panel
+- Flow errors → error pill stays visible, click opens panel; user can dismiss manually with ×
 
 ### Cancellation Handling
 
@@ -636,6 +684,16 @@ When a user cancels a flow:
 - Error pills remain visible until dismissed — check for errors in the flow
 - Flows with `preventAutoHide` feedback stay visible until the user dismisses them
 - Interactive prompts keep the panel open until the user responds
+
+### Entry Dismisses Too Quickly
+
+**Problem**: A finished entry disappears before you have time to read it.
+
+**Solutions**:
+
+- Increase `entryFadeDelay` — e.g. `entryFadeDelay: 8000` gives 8 seconds
+- Hover over the entry to pause the countdown while you read
+- Set `entryFadeDelay: 0` (default) to disable auto-dismiss entirely — the entry will only be removed when the whole monitor fades or you click ×
 
 ### Cancellation Not Working
 
@@ -689,6 +747,7 @@ When a user cancels a flow:
 ### User Experience
 
 - Set a reasonable `completionFadeDelay` (3000–5000 ms) so users can see completion status
+- Use `entryFadeDelay` (e.g. 4000–6000 ms) when running multiple flows in quick succession — entries clean themselves up automatically without cluttering the monitor
 - Enable `confirmCancellation` for destructive operations
 - Use `renderMarkdown` for formatted feedback messages
 - Position monitor where it doesn't obstruct content
@@ -764,4 +823,36 @@ When a user cancels a flow:
         - step: MONITOR_STATUS
           message: 'Document deleted successfully!'
           type: success
+```
+
+### Auto-Dismiss in a High-Volume Workflow
+
+When running many short flows in quick succession (e.g. processing a list), use `entryFadeDelay` to keep the monitor tidy. Finished entries clean themselves up automatically, and the animated countdown bar makes it clear how long each entry will stay visible.
+
+```yaml
+AI_KIT:
+  MONITOR:
+    enabled: true
+    entryFadeDelay: 4000 # All finished entries auto-dismiss after 4 s
+    allowEntryDismiss: true # Users can also dismiss entries manually
+
+  SECTIONS:
+    - section: 'Batch Processing'
+      actions:
+        - title: 'Translate Article'
+          monitor:
+            # enabled: true # inherited from global config
+            entryFadeDelay: 6000 # Give translators more time to read this entry
+          flow:
+            - step: DEEPL_TRANSLATE
+              target_lang: DE
+            - step: MONITOR_STATUS
+              message: 'Translation complete'
+              type: success
+
+        - title: 'Generate Summary'
+          # Inherits entryFadeDelay: 4000 from global config
+          flow:
+            - step: HUB_COMPLETION
+              instruction: 'Summarise the article in three sentences.'
 ```

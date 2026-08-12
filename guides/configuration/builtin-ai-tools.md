@@ -8,9 +8,11 @@ Complete reference for all built-in AI tools available in ProActions.
 
 ## Overview
 
-ProActions provides pre-configured tools that can be easily enabled for AI function calling. 
-These tools provide direct access to document manipulation, user interaction, and metadata without 
+ProActions provides pre-configured tools that can be easily enabled for AI function calling.
+These tools provide direct access to document manipulation, user interaction, and metadata without
 requiring you to write custom function definitions.
+
+**StoryEditor** is the curated, task-level surface for editorial agents — safe validated text edits, named document fields, and visual marks, with your document's xpaths and safety rules configured once via `config:`. **ContentTools** and **HighlightTools** remain the stable read/write primitives underneath it. These tools work identically in `OPENAI_COMPLETION`/`HUB_COMPLETION` and in voice agents — see the [Voice Agents guide](./voice-agents.md).
 
 ## Configuration
 
@@ -108,17 +110,55 @@ Alias argument behavior:
 - Runtime arguments are merged with fixed defaults, where fixed values win.
 - With `toolStrict: true`, overriding fixed top-level arguments is rejected.
 
+### Conditional Tools (`when`)
+
+Object entries (`class`, `alias`, and `mcp` forms) support an optional `when` condition — a template expression or boolean evaluated once when the request or voice session is built. When it resolves falsy, the tools are neither advertised to the model nor executable:
+
+```yaml
+builtinTools:
+  - alias: setHeadline
+    target: replaceTextAtXpath
+    args:
+      xpath: "/doc/story/headline"
+    when: "{{ not client.isReadonly() }}"
+  - class: ContentTools
+    only: [getSelectedText]
+    when: "{{ client.isTextSelected() }}"
+```
+
+See [Conditional Tool Exposure](./ai-integration.md#conditional-tool-exposure-when) in the AI Integration guide for evaluation semantics.
+
+### Provider Configuration (`config`)
+
+Class entries accept a `config:` block, validated against the provider's declared configuration options (unknown keys warn but never fail). Values support template expressions — resolved once when the request or voice session is built, with access to flowContext, `client.*`, and `global`/`imports` block constants:
+
+```yaml
+builtinTools:
+  - class: StoryEditor
+    only: [searchAndReplaceText, appendParagraph, getField, setField]
+    config:
+      bodyXpath: "{{ imports.env.doc.body }}"
+      allowedElements: [p, h2, h3, ul, li, b, i, u]
+      fields:
+        headline: "/doc/story/grouphead/headline/p"
+        summary: "/doc/story/summary/p"
+```
+
+Each provider's options are documented in its **Configuration** section below. See [Configuring Built-in Tools](./ai-integration.md#configuring-built-in-tools-config) in the AI Integration guide for the full semantics.
+
 
 ## ContentTools
 
-Tools for reading and writing document content
+Stable read/write primitives for the current document: full-document and selection reads, cursor-anchored paragraph access, and exact-xpath operations. For task-level editorial work (safe edits, named fields, marks) prefer the StoryEditor provider.
+
+
 
 ### Tools
 
 
 #### `getTextContent`
 
-Get the text content of the current document
+Read the full document as plain text. The primary read for answering questions about or quoting from the current document.
 
 
 **Parameters:**
@@ -134,7 +174,7 @@ Get the text content of the current document
 
 #### `getXmlContent`
 
-Get the XML content of the current document
+Read the full document as raw XML including all markup. Use only when document structure matters — for plain content use getTextContent.
 
 
 **Parameters:**
@@ -150,7 +190,7 @@ Get the XML content of the current document
 
 #### `getSelectedText`
 
-Get the currently selected text in the editor
+Get the text the user has currently selected in the editor. Returns empty when nothing is selected — check isTextSelected first when the selection state is unknown.
 
 
 **Parameters:** None
@@ -160,7 +200,7 @@ Get the currently selected text in the editor
 
 #### `getSelectedXML`
 
-Get the XML of the currently selected content
+Get the raw XML of the user's current selection, including markup. For plain text use getSelectedText.
 
 
 **Parameters:** None
@@ -170,7 +210,7 @@ Get the XML of the currently selected content
 
 #### `getParagraphText`
 
-Get the text of the current paragraph where the cursor is located
+CURSOR-ANCHORED: returns the text of only the paragraph the cursor is in — not the whole document. Use when the user refers to "this paragraph".
 
 
 **Parameters:** None
@@ -180,7 +220,7 @@ Get the text of the current paragraph where the cursor is located
 
 #### `getParagraphXML`
 
-Get the XML of the current paragraph where the cursor is located
+CURSOR-ANCHORED: returns the raw XML of only the paragraph the cursor is in. For plain text use getParagraphText.
 
 
 **Parameters:** None
@@ -190,7 +230,7 @@ Get the XML of the current paragraph where the cursor is located
 
 #### `getXmlAtXpath`
 
-Get XML content at a specific XPath location
+Low-level primitive: read raw XML at an exact document xpath. Requires knowing the document structure.
 
 
 **Parameters:**
@@ -206,7 +246,7 @@ Get XML content at a specific XPath location
 
 #### `getTextAtXpath`
 
-Get text content at a specific XPath location
+Low-level primitive: read plain text at an exact document xpath. Requires knowing the document structure.
 
 
 **Parameters:**
@@ -222,7 +262,7 @@ Get text content at a specific XPath location
 
 #### `isTextSelected`
 
-Check if any text is currently selected in the editor
+Check whether the user currently has text selected. Call this before selection-based tools when the selection state is unknown.
 
 
 **Parameters:** None
@@ -252,7 +292,7 @@ Get the XPath of the currently selected element
 
 #### `getContainerTextContent`
 
-Get text content from the container (for container documents)
+CONTAINER DOCUMENTS ONLY: read the aggregated text content of the container.
 
 
 **Parameters:** None
@@ -262,7 +302,7 @@ Get text content from the container (for container documents)
 
 #### `getContainerXmlContents`
 
-Get XML contents from all items in the container
+CONTAINER DOCUMENTS ONLY: read each contained item with its metadata and XML.
 
 
 **Parameters:** None
@@ -275,7 +315,7 @@ Get XML contents from all items in the container
 
 #### `insertTextAtCursor`
 
-Insert text at the current cursor position
+CURSOR-ANCHORED write: insert plain text at the current cursor position.
 
 
 **Parameters:**
@@ -291,7 +331,7 @@ Insert text at the current cursor position
 
 #### `insertTextAtXpath`
 
-Insert text at a specific XPath location
+Low-level primitive: insert plain text at an exact document xpath. Requires knowing the document structure.
 
 
 **Parameters:**
@@ -309,7 +349,7 @@ Insert text at a specific XPath location
 
 #### `insertXmlAtCursor`
 
-Insert XML at the current cursor position
+CURSOR-ANCHORED write: insert raw XML at the cursor. The XML is written as-is — ensure it is well-formed and uses only elements valid at that location.
 
 
 **Parameters:**
@@ -327,7 +367,7 @@ Insert XML at the current cursor position
 
 #### `insertXmlAtXpath`
 
-Insert XML at a specific XPath location
+Low-level primitive: insert raw XML at an exact xpath. The XML is written as-is — ensure it is well-formed and uses only elements valid at that location.
 
 
 **Parameters:**
@@ -345,7 +385,7 @@ Insert XML at a specific XPath location
 
 #### `replaceTextAtCursor`
 
-Replace the selected text at cursor with new text
+SELECTION-ANCHORED write: replaces the user's current selection with new plain text. Requires an active selection.
 
 
 **Parameters:**
@@ -361,7 +401,7 @@ Replace the selected text at cursor with new text
 
 #### `replaceTextAtCursorParagraph`
 
-Replace the entire paragraph at cursor with new text
+CURSOR-ANCHORED write: replaces the entire paragraph the cursor is in with new plain text.
 
 
 **Parameters:**
@@ -377,7 +417,7 @@ Replace the entire paragraph at cursor with new text
 
 #### `replaceTextAtXpath`
 
-Replace text at a specific XPath location
+Low-level primitive: replace plain text at an exact document xpath. Requires knowing the document structure.
 
 
 **Parameters:**
@@ -427,7 +467,7 @@ Replace the entire paragraph XML at cursor with new XML
 
 #### `replaceXmlAtXpath`
 
-Replace XML at a specific XPath location
+Low-level primitive: replace raw XML at an exact xpath. The XML is written as-is — ensure it is well-formed; a malformed write can corrupt the document.
 
 
 **Parameters:**
@@ -447,6 +487,8 @@ Replace XML at a specific XPath location
 ## ContainerInfoTools
 
 Tools for retrieving information about the container (for container documents)
+
+
 
 ### Tools
 
@@ -606,6 +648,8 @@ Get the usage tickets of the container as a string
 
 Custom tool provider used for validation
 
+
+
 ### Tools
 
 
@@ -639,6 +683,8 @@ Return summary information about the current document.
 ## DocumentInfoTools
 
 Tools for retrieving information about the current document
+
+
 
 ### Tools
 
@@ -836,14 +882,16 @@ Get the workfolder of the current document
 
 ## FeedbackTools
 
-Tools for providing feedback and progress updates to the user
+Tools for showing progress, results, and structured data to the user in the Flow Execution Monitor.
+
+
 
 ### Tools
 
 
 #### `addFeedback`
 
-Add a feedback message to the execution monitor
+Show a message in the execution monitor. Content is rendered as markdown. Use type "status"/"info" for progress notes and "success"/"warning"/"error" for outcomes.
 
 
 **Parameters:**
@@ -863,7 +911,7 @@ Add a feedback message to the execution monitor
 
 #### `updateProgress`
 
-Update progress with a percentage (0-100)
+Update the monitor progress bar (0-100). Use during long multi-step work so the user sees movement.
 
 
 **Parameters:**
@@ -901,7 +949,7 @@ Display data as a table in the monitor. Example rows: `[{"Metric":"Readability",
 
 #### `addJsonFeedback`
 
-Display data as formatted JSON in the monitor
+Display raw structured data as formatted JSON in the monitor. For human-readable results prefer addFeedback (markdown) or addTableFeedback.
 
 
 **Parameters:**
@@ -921,7 +969,7 @@ Display data as formatted JSON in the monitor
 
 #### `addKeyValueFeedback`
 
-Display key-value pairs in the monitor
+Display key-value pairs in the monitor — ideal for small fact sheets (e.g. author, date, status).
 
 
 **Parameters:**
@@ -939,7 +987,7 @@ Display key-value pairs in the monitor
 
 #### `addMetricsFeedback`
 
-Display metrics (numbers with labels) in the monitor. Provide metrics as a key-value object.
+Display numeric scores with labels in the monitor. Use for metrics and ratings; for arbitrary facts use addKeyValueFeedback.
 
 
 **Parameters:**
@@ -957,7 +1005,7 @@ Display metrics (numbers with labels) in the monitor. Provide metrics as a key-v
 
 #### `showNotification`
 
-Show a notification to the user
+Show a system notification outside the monitor. Use sparingly for important outcomes — routine progress belongs in addFeedback.
 
 
 **Parameters:**
@@ -977,7 +1025,7 @@ Show a notification to the user
 
 #### `highlightTextSegments`
 
-Highlight text segments by matching their content in the document, then adding pure text tags.
+Highlight text segments in the document by MATCHING THEIR CONTENT — no offsets needed. The preferred way to visually mark text; matching tolerance (case, whitespace) is configurable per segment.
 
 
 **Parameters:**
@@ -1002,14 +1050,16 @@ Highlight text segments by matching their content in the document, then adding p
 
 ## HighlightTools
 
-Tools for marking and highlighting text content
+Low-level text-tagging primitives operating on the document's normalized pure text. For marking text by content, prefer highlightTextSegments (FeedbackTools) or markSegments (StoryEditor).
+
+
 
 ### Tools
 
 
 #### `getPureText`
 
-Get the pure text content of the document or report without any formatting or markup
+Read the document as normalized plain text without markup. This is the exact text that pure-text tag offsets are computed against — read it before using addPureTextTags.
 
 
 **Parameters:** None
@@ -1019,7 +1069,7 @@ Get the pure text content of the document or report without any formatting or ma
 
 #### `addPureTextTags`
 
-Add tags to pure text content
+OFFSET-LEVEL primitive: add tags at character offsets into the pure text. Offsets must be computed against getPureText exactly — prefer highlightTextSegments, which matches by text content instead of offsets.
 
 
 **Parameters:**
@@ -1037,7 +1087,7 @@ Add tags to pure text content
 
 #### `clearPureTextTags`
 
-Clear specific tags from a document or report
+Remove all tags with the given names from the document pure text (e.g. to clear highlights added earlier).
 
 
 **Parameters:**
@@ -1052,9 +1102,193 @@ Clear specific tags from a document or report
 
 
 
+## StoryEditor
+
+Task-level tools for reading, editing, and annotating the current story. The preferred tool surface for editorial agents — safe validated edits, named document fields, and visual marks.
+
+
+### Configuration
+
+Set via the `config:` block on the `builtinTools` class entry:
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `bodyXpath` | `string` | `"/doc/story"` | XPath of the content root that searchAndReplaceText reads and writes |
+| `appendXpath` | `string` | `"/doc/story/text"` | XPath of the element appendParagraph inserts new paragraphs into |
+| `allowedElements` | `array` | `["p","h2","h3","ul","li","b","i","u"]` | XML elements allowed in searchAndReplaceText replacement content |
+| `inlineElements` | `array` | `["b","i","u"]` | Inline formatting elements allowed in appendParagraph text |
+| `fields` | `object` | — | Map of semantic field names to xpaths (e.g. headline: /doc/story/grouphead/headline/p). Generates the getField/setField tools with the field names as an enum; both tools are dropped when no fields are configured. |
+| `markTag` | `string` | `"mark"` | Tag name used by markSegments/clearMarks |
+
+
+
+### Tools
+
+
+#### `readStory`
+
+Read the current story as plain text. Use this before answering questions about the story and before any edit, so search strings can be copied exactly from the article.
+
+
+**Parameters:** None
+
+
+
+
+#### `readSelection`
+
+Get the text the user has currently selected in the editor. Use when the user refers to "this", "the selected text", or "what I marked". Returns empty when nothing is selected.
+
+
+**Parameters:** None
+
+
+
+
+#### `readCurrentParagraph`
+
+Get the text of the paragraph the user's cursor is in. ONLY useful when the user refers to "this paragraph" or "the current paragraph" — for any other location use readStory.
+
+
+**Parameters:** None
+
+
+
+
+#### `replaceCurrentParagraph`
+
+Replace the full text of the paragraph the user's cursor is in. ONLY works on that one paragraph — for edits anywhere else in the story use searchAndReplaceText.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `text` | `string` | Yes | New text for the paragraph |
+
+
+
+
+**Returns:** JSON: \{ success: true \}
+
+
+
+#### `searchAndReplaceText`
+
+The preferred way to change article text — use this for removing, rewriting, or correcting any sentence or segment in the story. Use an empty replace string to delete the found text. Searches for an exact string and replaces its first occurrence. The search string must appear verbatim in the article — copy it exactly from the story text (or from the raw story XML when the search needs to include tags for structural changes). The replacement is validated before it is applied; if it would break the document, nothing is changed and an error with a hint is returned. Returns \{ found, success \} plus error/hint details on rejection.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `search` | `string` | Yes | Exact text to find (copied verbatim from the article, may include XML tags) |
+
+| `replace` | `string` | Yes | Replacement text (empty string deletes the found text) |
+
+
+
+
+**Returns:** JSON: \{ found, success, error?, hint? \} — on rejection the document is unchanged
+
+
+
+#### `appendParagraph`
+
+Append the given text as a new paragraph at the end of the story. Inline formatting tags (by default \<b>, \<i>, \<u>) are allowed. Invalid markup is stripped automatically and the text is inserted as plain content (reported via note: 'invalid_markup_stripped').
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `text` | `string` | Yes | Paragraph text, optionally with allowed inline formatting tags |
+
+
+
+
+**Returns:** JSON: \{ success, note?, error?, hint? \} — note 'invalid_markup_stripped' when markup was removed
+
+
+
+#### `getField`
+
+Read the text value of a named document field. Use this for the listed fields instead of xpath-based reads.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `name` | `string` | Yes | Field name (see the listed available fields) |
+
+
+
+
+**Returns:** The field text, or JSON \{ error: "unknown_field", hint \} for unconfigured fields
+
+
+
+#### `setField`
+
+Replace the text value of a named document field. Text-level write — use this for the listed fields instead of xpath-based or search-and-replace edits.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `name` | `string` | Yes | Field name (see the listed available fields) |
+
+| `text` | `string` | Yes | New text value for the field |
+
+
+
+
+**Returns:** JSON: \{ success, field \} or \{ error: "unknown_field", hint \} for unconfigured fields
+
+
+
+#### `markSegments`
+
+Visually highlight text segments in the story (e.g. to show the user which sentences you propose to change). Does NOT modify the content. Matching is whitespace- and case-tolerant; pass the exact text of each segment as it appears in the story.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `segments` | `array` | Yes | Segments to mark |
+
+
+
+
+**Returns:** JSON result of the marking operation
+
+
+
+#### `clearMarks`
+
+Remove all highlight marks previously added with markSegments.
+
+
+**Parameters:** None
+
+
+
+
+
 ## HubMcp
 
 Generic passthrough for invoking MCP tools via the Hub when a specific server/tool pair is not pre-configured as an alias.
+
+
 
 ### Tools
 
@@ -1086,6 +1320,8 @@ Execute a tool on an MCP server via the Hub
 ## ToolDiscovery
 
 Meta-tools used by the autoDiscoverTools flow to list available providers and activate them on demand during a completion.
+
+
 
 ### Tools
 
@@ -1132,6 +1368,8 @@ Activate one or more tool providers to make their tools available for this sessi
 ## UserInfoTools
 
 Tools for retrieving information about the current user
+
+
 
 ### Tools
 
@@ -1219,7 +1457,9 @@ Get the system metadata of the current user as a string
 
 ## UserInteractionTools
 
-Tools for prompting user for input and decisions
+Tools for asking the user questions and decisions in the Flow Execution Monitor. Execution pauses until the user answers.
+
+
 
 ### Tools
 
@@ -1324,6 +1564,8 @@ Ask the user a yes/no confirmation question. User sees Yes and No buttons.
 ## UtilityTools
 
 Utility tools for data conversion and manipulation
+
+
 
 ### Tools
 

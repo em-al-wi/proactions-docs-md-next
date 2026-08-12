@@ -26,7 +26,6 @@ Breaks out of the current loop (e.g., WHILE or FOR) based on the given condition
    do:
      - step: SET
        counter: "{{ flowContext.counter + 1 }}"
-       convertTo: "number"
      - step: BREAK
        condition: "{{ flowContext.counter == 5 }}"
  ```

@@ -316,6 +316,157 @@ Now that you have a basic configuration running:
 3. [Apply security hardening](./operations/security-hardening.md) for production
 4. [Review operations guide](./operations/operations-guide.md) for maintenance procedures
 
+## Connecting Your Workflows to Hub
+
+Once Hub is running with at least one AI target, you can use it from any ProActions workflow.
+Below is the complete path from Hub configuration to a working YAML action.
+
+### 1. Hub server — define a target (`config.yaml`)
+
+```yaml
+# config.yaml (on the Hub server)
+targets:
+  - id: openai          # logical name you choose — used as "target" in YAML
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
+    options:
+      model: gpt-4o-mini
+      max_completion_tokens: 12000
+```
+
+### 2. ProActions YAML — declare the service
+
+Point the `HUB` service entry at the Hub endpoint and specify which target to use:
+
+```yaml
+# /SysConfig/pro-actions.ai-kit.yaml
+AI_KIT:
+  SERVICES:
+    HUB:
+      endpoint: '{BASE_URL}/swing/proactions'   # {BASE_URL} = current Swing instance
+      target: openai                            # must match target.id in config.yaml
+      defaultBehavior: |
+        You are a professional writing assistant.
+        Answer concisely and in the language of the article.
+
+  SECTIONS:
+    - !include /SysConfig/ProActions/sections/my-actions.ai-kit.section.yaml
+```
+
+### 3. ProActions YAML — use the service in a flow
+
+Any `HUB_COMPLETION`, `HUB_SPEECH`, `HUB_TRANSCRIPTION`, or `HUB_IMAGE_GENERATION` step
+automatically routes through the `HUB` service you declared above:
+
+```yaml
+# /SysConfig/ProActions/sections/my-actions.ai-kit.section.yaml
+section: Content Generation
+context: story
+actions:
+  - title: 'Summarize Article'
+    flow:
+      # Call the AI service through Hub — no API key in YAML
+      - step: HUB_COMPLETION
+        instruction: 'Write a two-sentence summary of this article: {textContent}'
+
+      # Display the result and let the user accept or cancel
+      - step: SHOW_RESPONSE
+        message: '{{ flowContext.text }}'
+
+    onError:
+      - step: SHOW_NOTIFICATION
+        notificationType: error
+        message: 'Hub unavailable: {{ flowContext.error }}'
+```
+
+### 4. Switching targets at the action level
+
+If you have multiple Hub targets configured (e.g., `openai` and `claude`), you can override the
+default at the step level without changing the service declaration:
+
+```yaml
+# config.yaml — two targets
+targets:
+  - id: openai
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
+    options:
+      model: gpt-4o
+
+  - id: claude
+    provider: anthropic
+    apiKey: ${ANTHROPIC_API_KEY}
+    options:
+      model: claude-opus-4-5
+```
+
+```yaml
+# YAML — per-step target override
+- step: HUB_COMPLETION
+  instruction: 'Draft a headline: {textContent}'
+  target: claude   # overrides the section-level HUB.target for this step only
+```
+
+### 5. Using a different service definition at the step level
+
+Both options above (`target:` within a single service, multiple service declarations) share
+the same `HUB` service definition. A third option is to declare **multiple service definitions**
+in `SERVICES:` and tell a specific step to use one of them via the `service:` property.
+
+This is useful when two service definitions need different `defaultBehavior`, `endpoint`, or
+other settings that cannot be changed per-step via `target:` alone:
+
+```yaml
+# /SysConfig/pro-actions.ai-kit.yaml
+AI_KIT:
+  SERVICES:
+    HUB:
+      endpoint: '{BASE_URL}/swing/proactions'
+      target: openai
+      defaultBehavior: |
+        You are a professional writing assistant.
+
+    HUB_TRANSLATE:
+      endpoint: '{BASE_URL}/swing/proactions'
+      target: openai
+      defaultBehavior: |
+        You are a professional translator.
+        Preserve formatting and tone.
+        Return only the translated text, no explanations.
+```
+
+```yaml
+# In a flow — pick the service definition per step
+- step: HUB_COMPLETION
+  instruction: 'Improve this text: {selectedText}'
+  # service: not set — uses the default HUB service
+
+- step: HUB_COMPLETION
+  instruction: 'Translate to French: {selectedText}'
+  service: HUB_TRANSLATE   # uses the HUB_TRANSLATE service definition instead
+```
+
+`service:` is supported on **all** service-aware steps, not just `HUB_COMPLETION`. For example,
+if you have two DeepL configurations pointing to different API plans, you can switch between them
+the same way:
+
+```yaml
+SERVICES:
+  DEEPL:
+    endpoint: /swing/proactions/proxy/forward/deepl
+  DEEPL_PRO:
+    endpoint: /swing/proactions/proxy/forward/deepl-pro
+
+# In flow:
+- step: DEEPL_TRANSLATE
+  instruction: '{selectedText}'
+  target_lang: FR
+  service: DEEPL_PRO   # use the PRO plan service definition for this step
+```
+
+For the full list of `HUB_COMPLETION` options, see the
+[HUB_COMPLETION step reference](../step-library/steps/HUB_COMPLETION.md).
+
 ## Troubleshooting
 
 ### Container Won't Start

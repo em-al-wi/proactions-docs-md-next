@@ -99,7 +99,7 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 | `afterToolResultToolChoice` | Behavior after a tool result (none\|auto) | None |false| false |None|None|
 | `toolErrorBehavior` | How to handle tool execution errors: "retry" allows LLM to retry failed tools (default), "fail" stops the flow immediately on any tool error, "once" prevents retrying the same tool after it fails once | None |false| false |None|None|
 | `functionErrorBehavior` | How to handle function execution errors (deprecated, use toolErrorBehavior instead) | None |false| false |None|None|
-| `tools` | Array of tool/function descriptors for tool calling. Each descriptor can define template, steps, script, or scriptRef. | None |false| false |None|None|
+| `tools` | Array of tool/function descriptors for tool calling. Each descriptor can define template, steps, script, or scriptRef. An optional `when` condition (template expression or boolean, evaluated once per request) gates whether the tool is exposed to the model. | None |false| false |None|None|
 | `functions` | Array of function descriptors for tool calling (deprecated, use tools instead). Supports template, steps, script, or scriptRef. | None |false| false |None|None|
 | `toolsReuseContext` | Whether to reuse full flowContext when executing tool templates | None |false| false |None|None|
 | `functionsReuseContext` | Whether to reuse full flowContext when executing function templates (deprecated, use toolsReuseContext instead) | None |false| false |None|None|
@@ -113,16 +113,13 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 | `imageDetail` | Image detail level for image inputs (low, high, auto) | auto |false| false |None|None|
 | `audioFormat` | Audio format for audio inputs (e.g., wav, mp3) | None |false| false |None|None|
 | `attachments` | Array of generic attachments (images, audio, text) to include in the user message | None |false| false |None|None|
-| `autoDiscoverTools` | 'Enable dynamic tool discovery. When true, the agent can discover and activate tool providers on demand ' +
-    'via listAvailableTools and activateTools meta-tools, instead of requiring all tools to be listed explicitly. ' +
-    'Can be combined with builtinTools for aliases, MCP tools, and explicit provider configurations.' | false |false| false |None|None|
-| `builtinTools` | List of built-in tool classes to enable for the AI model | None |false| false |None|None|
+| `autoDiscoverTools` | Enable dynamic tool discovery. When true, the agent can discover and activate tool providers on demand via listAvailableTools and activateTools meta-tools, instead of requiring all tools to be listed explicitly. Can be combined with builtinTools for aliases, MCP tools, and explicit provider configurations. | false |false| false |None|None|
+| `builtinTools` | List of built-in tool classes to enable for the AI model. Object entries support an optional `when` condition (template expression or boolean, evaluated once per request) that gates whether the tools are exposed to the model. | None |false| false |None|None|
 | `toolGuidance` | Optional tool schema guidance (e.g., addTableFeedback columns or addMetricsFeedback metric keys and ranges) | None |false| false |None|None|
 | `toolStrict` | Enable strict tool argument validation (reject missing/extra arguments) | false |false| false |None|None|
 | `stream` | Enable streaming mode for incremental response delivery. When enabled, tokens are delivered as they are generated rather than waiting for the full response. Streaming is automatically disabled for incompatible configurations (json_schema, list, audio output). Defaults to false. | false |false| false |None|None|
 | `feedback` | Show streaming response in the Flow Execution Monitor. Defaults to true when stream is enabled. Set to false to use streaming for performance (faster time-to-first-token) without monitor visualization. | None |false| false |None|None|
-| `skills` | 'List of skill names to load. Skills provide system instructions and reference documents. ' +
-    'Each skill is loaded from `/SysConfig/ProActions/Skills/<skillName>/SKILL.md`.' | None |false| false |None|None|
+| `skills` | List of skill names to load. Skills provide system instructions and reference documents. Each skill is loaded from `/SysConfig/ProActions/Skills/<skillName>/SKILL.md`. Entries can also be objects `\{ name, when \}` where `when` (template expression or boolean, evaluated once per request) gates whether the skill is loaded. | None |false| false |None|None|
 
 ## Outputs
 | Type | Description | Optional |

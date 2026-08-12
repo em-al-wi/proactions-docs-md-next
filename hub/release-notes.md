@@ -4,7 +4,7 @@ title: ProActions Hub Release Notes
 sidebar_label: Hub Release Notes
 ---
 
-### 1.2.0 - 05/02/2026
+### 1.2.0 - 23/04/2026
 
 #### New Features
 

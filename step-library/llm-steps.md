@@ -243,6 +243,34 @@ Hub-compatible transcription step (delegates to hub service). Writes transcripti
 ---
 
 
+### [HUB_VOICE_AGENT](./steps/HUB_VOICE_AGENT.md)
+
+Full-duplex voice session routed through ProActions Hub (WebSocket only — a proxy cannot relay WebRTC media). Same capabilities as OPENAI_VOICE_AGENT but uses Hub for centralized API key management and request routing.
+
+
+
+
+**Version:** 1.0.0
+
+
+
+**Example:**
+```yaml
+
+- step: OPENAI_VOICE_AGENT
+  behavior: |
+    You are a helpful editorial voice assistant.
+
+    Complete the user's request, then call end_session with a concise summary.
+  voice: marin
+  maxDurationSecs: 300
+
+```
+
+
+---
+
+
 ### [OPENAI_ASSISTANT](./steps/OPENAI_ASSISTANT.md)
 
 Create or reuse an OpenAI assistant. If cfg.assistantId is provided the assistant will be retrieved; otherwise a new assistant is created. The created or retrieved assistant is written to the flow context.
@@ -469,6 +497,34 @@ Transcribe audio using OpenAI (or Azure/Hub variants). Reads an audio file/blob 
 
 - step: OPENAI_TRANSCRIPTION
   model: "whisper-1"
+
+```
+
+
+---
+
+
+### [OPENAI_VOICE_AGENT](./steps/OPENAI_VOICE_AGENT.md)
+
+Full-duplex voice session using the OpenAI Realtime API over WebRTC (default, with automatic WebSocket fallback). Captures microphone input, streams to the model, plays back the spoken response, and accumulates a conversation transcript. Supports tool calls and structured results.
+
+
+
+
+**Version:** 1.0.0
+
+
+
+**Example:**
+```yaml
+
+- step: OPENAI_VOICE_AGENT
+  behavior: |
+    You are a helpful editorial voice assistant.
+
+    Complete the user's request, then call end_session with a concise summary.
+  voice: marin
+  maxDurationSecs: 300
 
 ```
 

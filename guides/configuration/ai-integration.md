@@ -12,6 +12,8 @@ ProActions provides three completion step types that share the same underlying i
 
 All three steps support the same features and configuration options, differing only in their default service names.
 
+For live, spoken conversations instead of single-turn completions, see the [Voice Agents guide](./voice-agents.md) covering `OPENAI_VOICE_AGENT` / `HUB_VOICE_AGENT` — they share the tool calling, skills, `when:` gating, and `config:` mechanics described below.
+
 ## Basic Usage
 
 ### Simple Text Completion
@@ -434,6 +436,120 @@ builtinTools:
     args:
       attributes:
         class: 'fact-check'
+```
+
+### Conditional Tool Exposure (`when`)
+
+Every tool the model sees costs context tokens and competes for its attention. Use the optional `when` condition to expose a tool only when it is relevant — gated entries never enter the model's tool list.
+
+`when` accepts a template expression or a boolean and is supported on:
+
+- `builtinTools` object entries (`class`, `alias`, and `mcp` forms)
+- user-defined `tools` descriptors
+
+```yaml
+- step: HUB_COMPLETION
+  instruction: 'Help the user edit the article.'
+  builtinTools:
+    # Only offer selection-based tools when text is actually selected
+    - class: ContentTools
+      only: [getSelectedText, replaceTextAtCursor]
+      when: '{{ client.isTextSelected() }}'
+
+    # Editing tools disappear entirely in read-only mode
+    - alias: setHeadline
+      target: replaceTextAtXpath
+      args:
+        xpath: '/doc/story/grouphead/headline/p'
+      when: '{{ not client.isReadonly() }}'
+  tools:
+    # Custom tools can be gated by flow state
+    - name: applyReviewFix
+      description: 'Apply a fix suggested by the review step'
+      when: '{{ flowContext.reviewFindings }}'
+      steps:
+        - step: SCRIPTING
+          script: '/* ... */'
+```
+
+**Evaluation semantics:**
+
+- Conditions are evaluated **once**, when the request is built — for `OPENAI_VOICE_AGENT` / `HUB_VOICE_AGENT` this happens once at session start, and the result holds for the whole voice session.
+- Entries without `when` are always active; alias templates (`aliasTemplate`) are never filtered — gate the aliases that extend them instead.
+- A gated builtin alias is also removed from the executor configuration, so it cannot be invoked even if the model guesses its name. Gated user-defined `tools` are gated at advertisement time — the model cannot call tools that are not in its tool list, but their definition remains part of the flow configuration.
+- Evaluation is **fail-closed**: if the expression cannot be resolved, a warning is logged and the entry stays hidden — a broken condition never accidentally exposes a gated tool.
+
+`when` gates by editor and flow state at build time. When you need the *model* to pull in tools based on the conversation instead, combine it with dynamic discovery (next section).
+
+### Configuring Built-in Tools (`config`)
+
+Built-in tool providers can declare configuration options; a `builtinTools` class entry sets them via a `config:` block. Validation is deliberately soft — unknown keys and type mismatches produce a warning but never fail the flow.
+
+Config values (and alias `args`) support template expressions, resolved **once** when the request — or voice session — is built. Expressions can reference `flowContext`, `client.*` methods, and `global`/`imports` block constants, so environment-specific facts like xpaths live in one module per deployment instead of being repeated per flow:
+
+```yaml
+- step: OPENAI_VOICE_AGENT
+  behavior: '<persona + conversation protocol>'
+  builtinTools:
+    - class: StoryEditor
+      only: [readStory, searchAndReplaceText, appendParagraph, getField, setField]
+      when: '{{ not client.isReadonly() }}'
+      config:
+        bodyXpath: '{{ imports.env.doc.body }}'
+        allowedElements: [p, h2, h3, ul, li, b, i, u]
+        fields:
+          headline: '{{ imports.env.doc.headline }}'
+          summary: '{{ imports.env.doc.summary }}'
+```
+
+Config values are never part of the tool schemas the model sees and cannot be set or overridden by tool calls. The available options per provider are listed in the [Built-in AI Tools Reference](./builtin-ai-tools.md).
+
+#### Safe Editing Tools (`searchAndReplaceText` / `appendParagraph`)
+
+The **StoryEditor** provider is the curated task-level surface for editorial agents — it also offers `readStory`, `readSelection`, `readCurrentParagraph`, `replaceCurrentParagraph`, and `markSegments`/`clearMarks` with editorial defaults baked in (ContentTools and HighlightTools remain the stable primitive layer underneath). Its hardened editing builtins mean flows no longer need custom scripts for safe content changes:
+
+- **`searchAndReplaceText(search, replace)`** — the preferred way to change article text. Replaces the first exact occurrence inside `bodyXpath`. The replacement fragment must be well-formed and use only `allowedElements`; the **whole updated document** is re-validated before writing, so an edit that would break the XML is rejected with a corrective hint and the document stays untouched. Bare ampersands in the replacement are escaped automatically. An empty `replace` deletes the found text.
+- **`appendParagraph(text)`** — appends a paragraph at `appendXpath`, allowing the configured `inlineElements` (default `<b>`, `<i>`, `<u>`). Invalid markup is stripped automatically and reported via `note: 'invalid_markup_stripped'` — the session keeps moving instead of retrying on formatting errors.
+
+Both return structured results (`{ found, success, error?, hint? }`) that the model can react to; rejections are normal tool results, not execution errors, so they do not trigger `toolErrorBehavior` tracking.
+
+#### Semantic Field Tools (`getField` / `setField`)
+
+A configured `fields` map (field name → xpath) generates two enum-constrained tools, replacing per-field alias sets like getHeadline/setHeadline/getSummary/setSummary:
+
+- The `name` parameter schema enumerates exactly the configured field names, and the tool descriptions list them — discoverable and typo-proof for the model.
+- Without configured `fields`, both tools are removed entirely (even when listed in `only:`).
+- Reads and writes are text-level (`getTextAtXpath` / `replaceTextAtXpath`) — no XML risk.
+- An unconfigured field name returns `{ error: 'unknown_field', hint: 'Available fields: …' }` so the model self-corrects.
+
+#### Migrating from flow-level scripts and aliases
+
+Before — per-flow boilerplate:
+
+```yaml
+builtinTools:
+  - alias: getHeadline
+    target: getTextAtXpath
+    args: { xpath: '/doc/story/grouphead/headline/p' }
+  - alias: setHeadline
+    target: replaceTextAtXpath
+    args: { xpath: '/doc/story/grouphead/headline/p' }
+tools:
+  - name: search_and_replace
+    description: '...'
+    script: |
+      # ~60 lines of XML validation and replacement logic
+```
+
+After — platform tools plus configuration:
+
+```yaml
+builtinTools:
+  - class: StoryEditor
+    only: [readStory, searchAndReplaceText, getField, setField]
+    config:
+      fields:
+        headline: '/doc/story/grouphead/headline/p'
 ```
 
 ### Dynamic Built-in Tool Discovery
@@ -1017,6 +1133,24 @@ Quotes require attribution in the same paragraph.
 
 Multiple skills are injected in the order listed and concatenated before the `behavior` system prompt.
 
+### Conditional Skill Loading (`when`)
+
+Skill entries can also be objects with an optional `when` condition (template expression or boolean). A gated-off skill is never fetched from the server — its instructions stay out of the system prompt and its references are not exposed:
+
+```yaml
+- step: HUB_COMPLETION
+  behavior: 'You are a senior editor.'
+  instruction: 'Review the article: {textContent}'
+  skills:
+    - editorial-style # plain string — always loaded
+    - name: print-layout-rules
+      when: '{{ flowContext.channel == "print" }}'
+    - name: xml-repair-playbook
+      when: '{{ flowContext.expertMode }}'
+```
+
+Conditions are evaluated once when the request is built (for voice agents: once at session start) and follow the same rules as [conditional tool exposure](#conditional-tool-exposure-when): missing `when` means always loaded, and unresolvable expressions log a warning and resolve to false.
+
 ### Reference Documents
 
 Skills can include reference documents (style sheets, glossaries, source lists, etc.) stored in a `references/` subdirectory. When at least one skill is loaded, ProActions automatically exposes a `read_skill_reference` tool to the AI:
@@ -1352,6 +1486,8 @@ Consider implementing content filters for user-facing applications:
 
 ## Further Reading
 
+- [Voice Agents Guide](./voice-agents.md)
+- [Built-in AI Tools Reference](./builtin-ai-tools.md)
 - [Service Configuration Guide](./service-configuration.md)
 - [Workflow Design Best Practices](./workflow-design.md)
 - [Template Variables and Expressions](../howto/use-nunjucks-templates.md)

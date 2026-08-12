@@ -470,6 +470,124 @@ For simpler error handling scenarios, use the `onError` configuration at the act
 - **Use `TRY/CATCH`** when you need granular error handling for specific steps within a flow
 - **Combine both** for complex scenarios with both action-level and step-level error handling
 
+## Customizing Step Behavior
+
+ProActions provides several mechanisms to alter how a step runs — wrapping it, changing what it
+receives, or controlling what it outputs.
+
+### Wrap a Step with Error Handling (`TRY`)
+
+Use `TRY` to intercept a step's failure without aborting the flow:
+
+```yaml
+- step: TRY
+  try:
+    - step: REST
+      url: 'https://api.example.com/data'
+      method: GET
+  catch:
+    # Provide a fallback value so the flow can continue
+    - step: SET
+      object: '{ "items": [] }'
+```
+
+### Apply Flow-Wide Error Handling (`onError`)
+
+`onError` at the action level acts as a top-level catch decorator for the entire flow. Any
+unhandled error in any step triggers it:
+
+```yaml
+- title: 'Process Article'
+  flow:
+    - step: HUB_COMPLETION
+      instruction: '...'
+    - step: REPLACE_TEXT
+      at: CURSOR
+  onError:
+    - step: SHOW_NOTIFICATION
+      notificationType: error
+      message: 'Something went wrong: {{ flowContext.error }}'
+```
+
+### Show UI Before Processing Completes (`inlineSteps`)
+
+`inlineSteps` on `USER_SELECT`, `FORM`, and `SHOW_RESPONSE` runs background steps while the UI is
+already visible. This effectively wraps the preparation logic around the UI step without blocking:
+
+```yaml
+- step: USER_SELECT
+  inlineSteps:
+    - step: HUB_COMPLETION
+      instruction: 'Generate options for: {textContent}'
+      response_format: list
+  promptText: 'Pick an option:'
+```
+
+### Rename a Step's Output (`outputs`)
+
+Some steps (e.g., `SELECTED_OBJECT`, `REST`) let you control the `flowContext` key they write to
+via an `outputs` declaration. Use this when two steps would otherwise write to the same default key:
+
+```yaml
+- step: SELECTED_OBJECT
+  outputs:
+    - type: object
+      name: selectedImage   # written to flowContext.selectedImage, not flowContext.object
+
+- step: REST
+  url: '...'
+  outputs:
+    - type: json
+      name: apiResponse     # written to flowContext.apiResponse, not flowContext.json
+```
+
+### Guard a Step Conditionally (`IF` / `END`)
+
+Use `IF` to conditionally skip a step group, or `END` to abort the flow early if a precondition
+isn't met. Both act as pre-execution guards on the steps they wrap:
+
+```yaml
+# Guard: only run the translation if text is actually selected
+- step: IF
+  condition: '{{ client.isTextSelected() }}'
+  then:
+    - step: DEEPL_TRANSLATE
+      instruction: '{selectedText}'
+      target_lang: FR
+    - step: REPLACE_TEXT
+      at: CURSOR
+  else:
+    - step: SHOW_NOTIFICATION
+      notificationType: warning
+      message: 'Select text first'
+
+# Abort guard: stop the flow if a word-count limit is exceeded
+- step: END
+  condition: '{{ flowContext.wordCount > 10000 }}'
+  notification:
+    type: error
+    message: 'Text too long ({{ flowContext.wordCount }} words). Limit is 10,000.'
+```
+
+### Control LLM Tool Retry Behavior (`toolErrorBehavior`)
+
+For `HUB_COMPLETION` steps that use function/tool calling, the `toolErrorBehavior` option controls
+how the LLM reacts to a failed tool invocation — effectively decorating the LLM's internal
+retry loop:
+
+```yaml
+- step: HUB_COMPLETION
+  instruction: 'Look up the latest news on {textContent}'
+  toolErrorBehavior: retry    # retry (default) | once | fail
+  maxToolIterations: 5        # cap the total tool-call loop
+```
+
+| Value | Behavior |
+|---|---|
+| `retry` (default) | LLM may retry a failed tool call in the same completion |
+| `once` | Each tool is called at most once; failure is passed back to the LLM but not retried |
+| `fail` | Any tool failure immediately throws an error, stopping the step |
+
 ## Organization and Maintainability
 
 ### Comment Complex Workflows
@@ -857,6 +975,194 @@ Use tooltips and descriptions:
         - step: HUB_COMPLETION
           instruction: 'Improve: {{ flowContext.currentParagraph }}'
 ```
+
+### Pattern: Retry with Backoff
+
+Use `WHILE` + `TRY` + `SLEEP` to retry a failing step a fixed number of times before giving up.
+This is the standard approach for transient service errors (rate limits, temporary unavailability).
+
+```yaml
+- title: 'Generate with Retry'
+  flow:
+    # Initialize retry counter and a flag that signals success
+    - step: SET
+      retryCount: 0
+      convertTo: number
+    - step: SET
+      retrySuccess: false
+
+    # Keep looping while we haven't succeeded and haven't exhausted attempts
+    - step: WHILE
+      condition: '{{ not flowContext.retrySuccess and flowContext.retryCount < 3 }}'
+      do:
+        - step: TRY
+          try:
+            # The step we want to retry on failure
+            - step: HUB_COMPLETION
+              instruction: 'Generate a summary for: {textContent}'
+
+            # If HUB_COMPLETION succeeds, mark as done to exit the loop
+            - step: SET
+              retrySuccess: true
+          catch:
+            # On failure: increment counter and wait before the next attempt
+            - step: SET
+              retryCount: '{{ flowContext.retryCount + 1 }}'
+              convertTo: number
+
+            - step: SHOW_NOTIFICATION
+              notificationType: warning
+              message: 'Attempt {{ flowContext.retryCount }} failed. Retrying...'
+
+            # Exponential-style delay: 1 s, 2 s, 3 s
+            - step: SLEEP
+              ms: '{{ flowContext.retryCount * 1000 }}'
+
+    # After the loop: check whether we eventually succeeded
+    - step: IF
+      condition: '{{ not flowContext.retrySuccess }}'
+      then:
+        - step: SHOW_NOTIFICATION
+          notificationType: error
+          message: 'Service unavailable after 3 attempts. Please try again later.'
+        - step: END
+
+    - step: REPLACE_TEXT
+      at: CURSOR
+
+  onError:
+    - step: SHOW_NOTIFICATION
+      notificationType: error
+      message: 'Unexpected error: {{ flowContext.error }}'
+```
+
+**Key points:**
+
+- `retrySuccess` acts as a break flag — set it to `true` inside `try:` to exit the loop cleanly.
+- The `SLEEP` duration grows with each attempt, giving the external service time to recover.
+- The `IF` check after the loop prevents the rest of the flow from running if all retries failed.
+- For LLM tool-call retries specifically, `HUB_COMPLETION` has a built-in `toolErrorBehavior`
+  option (`retry` / `once` / `fail`) that controls how the LLM handles failed tool invocations.
+
+## State Management in Parallel and Async Workflows
+
+ProActions executes steps sequentially by default — each step completes before the next starts.
+Two mechanisms break that linearity: `PARALLEL` (concurrent branches) and `inlineSteps`
+(background processing tied to a UI step). Both require deliberate state design.
+
+### How `PARALLEL` Merges State
+
+When all branches complete, their `flowContext` changes are **merged back into the main context**.
+The merge is a shallow, last-write-wins operation: if two branches write to the same key, the
+branch that finishes last wins. Design accordingly — **give each branch its own dedicated keys**.
+
+```yaml
+- title: 'Parallel Analysis'
+  flow:
+    # Run sentiment analysis and keyword extraction concurrently
+    - step: PARALLEL
+      steps:
+        - # Branch 1: sentiment — writes to flowContext.sentiment
+          - step: HUB_COMPLETION
+            instruction: |
+              Analyze the sentiment of this article.
+              Return JSON: { "sentiment": "positive|negative|neutral", "score": 0.0-1.0 }
+            response_format: json_object
+          - step: SET
+            sentiment: '{{ flowContext.object }}'
+
+        - # Branch 2: keywords — writes to flowContext.keywords
+          - step: HUB_COMPLETION
+            instruction: |
+              Extract 5 keywords from this article.
+              Return a JSON array of strings.
+            response_format: list
+          - step: SET
+            keywords: '{{ flowContext.list }}'
+
+    # Both branches are done — use the merged results
+    - step: SHOW_NOTIFICATION
+      message: |
+        Sentiment: {{ flowContext.sentiment.sentiment }}
+        Keywords: {{ flowContext.keywords | join(", ") }}
+```
+
+**Rules for safe parallel state:**
+
+- Use **unique variable names per branch** (`branch1Result`, `branch2Result`, not both using `result`).
+- Read only **immutable inputs** (built-in variables like `{textContent}`, or values set before the
+  `PARALLEL` step) inside branches — don't read keys that another branch may be writing.
+- Do any **cross-branch aggregation** _after_ the `PARALLEL` step completes.
+
+### Persisting State Across Loop Iterations
+
+Inside a `WHILE` or `FOR` loop, `flowContext` persists across all iterations. Use this deliberately
+to accumulate results:
+
+```yaml
+- title: 'Batch Tag Paragraphs'
+  flow:
+    # Initialize an accumulator before the loop
+    - step: SET
+      taggedResults: '[]'
+
+    - step: GET_ZONES
+      at: PARAGRAPHS
+
+    - step: FOR
+      items: '{{ flowContext.zones }}'
+      var: paragraph
+      do:
+        # Process each paragraph
+        - step: HUB_COMPLETION
+          instruction: 'Extract topic tags from: {{ flowContext.paragraph.text }}'
+          response_format: list
+
+        # Append results — build up state across iterations
+        - step: SET
+          taggedResults: '{{ flowContext.taggedResults + [{ "text": flowContext.paragraph.text, "tags": flowContext.list }] }}'
+
+    # taggedResults now contains all paragraphs with their tags
+    - step: SHOW_RESPONSE
+      message: '{{ flowContext.taggedResults | tojson }}'
+```
+
+### State with `inlineSteps` (Background Processing)
+
+When you use `inlineSteps` on `USER_SELECT`, `FORM`, or `SHOW_RESPONSE`, those steps execute in
+the background while the UI is already shown. The background steps write to `flowContext` normally;
+their outputs are available once the user interacts with the UI (e.g., submits the form or selects
+an item). Steps _after_ the UI step can safely read all background-written state.
+
+```yaml
+- title: 'Choose from Background-Generated Options'
+  flow:
+    # Store any state you need in the background BEFORE launching inlineSteps
+    - step: SET
+      articleTitle: '{{ client.getMetadata().metadata.general.title }}'
+
+    # USER_SELECT shows immediately; HUB_COMPLETION runs in the background
+    - step: USER_SELECT
+      inlineSteps:
+        - step: HUB_COMPLETION
+          instruction: 'Generate 5 headlines for an article titled "{{ flowContext.articleTitle }}"'
+          response_format: list
+      promptText: 'Choose a headline:'
+      enableKeyboardControl: true
+
+    # flowContext.text is the user-selected headline — available here after UI interaction
+    - step: REPLACE_TEXT
+      at: XPATH
+      xpath: '/doc/story/headline/p'
+```
+
+**What to avoid:**
+
+- Do **not** write to a key inside `inlineSteps` that the outer flow reads before the UI step
+  completes — the outer flow is paused waiting for user input, so this is safe, but be aware that
+  `inlineSteps` errors surface as in-modal messages, not as `onError` flow triggers.
+- Do **not** share mutable state between `inlineSteps` branches and the outer flow's pre-UI steps
+  if both run concurrently.
 
 ## Anti-Patterns to Avoid
 

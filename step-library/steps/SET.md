@@ -43,7 +43,7 @@ Use **SET** when you need to create or modify variables in the workflow context 
 | `text` | Text to resolve (with variables) and set as the variable value. | None |false| true |None|None|
 | `raw_text` | Raw text to set as the variable value without resolution. | None |false| false |None|None|
 | `name` | Name of the variable to set in the flow context. | None |false| false |None|None|
-| `convertTo` | Convert the value to a specific type (e.g., "number"). | None |false| false |None|None|
+| `convertTo` | DEPRECATED — templates now return native types automatically. Use \{\{ flowContext.x + 1 \}\} (number) instead of \{\{ flowContext.x \}\} + convertTo. This option keeps working but logs a warning per offending action. | None |false| false |None|None|
 
 ## Outputs
 | Type | Description | Optional |
@@ -58,7 +58,6 @@ Use **SET** when you need to create or modify variables in the workflow context 
    userId: "{{ flowContext.currentUser.id }}"
    isActive: true
    count: 5
-   convertTo: "number"
  ```
 
 ### Set a variable using text (legacy syntax)
@@ -68,11 +67,10 @@ Use **SET** when you need to create or modify variables in the workflow context 
    text: "Hello {{userName}}"
  ```
 
-### Set numeric variables
+### Set numeric variables from expressions
 ```yaml
  - step: SET
-   count: 5
-   convertTo: "number"
+   count: "{{ flowContext.start + 1 }}"
  ```
 
 ## Common Pitfalls
@@ -91,11 +89,11 @@ Use **SET** when you need to create or modify variables in the workflow context 
 **Solution:** Use `raw_text` for literal strings that contain \{\{ or \}\} characters, or escape them in templates.
 :::
 
-:::warning Don't forget type conversion - numbers in templates are strings
+:::warning Don't use convertTo — it's deprecated and unnecessary
 
-**Why:** Template resolution produces strings. "\{\{ 5 \}\}" becomes "5" (string), not 5 (number), which breaks numeric operations.
+**Why:** Whole-string \{\{ … \}\} templates now return native types automatically. \{\{ flowContext.count + 1 \}\} yields a number; \{\{ flowContext.flag \}\} yields a boolean; \{\{ flowContext.items \}\} yields the actual array reference.
 
-**Solution:** Use `convertTo: "number"` to convert string values to numbers, or use expression mode for numeric calculations.
+**Solution:** Write the expression directly: `count: "\{\{ flowContext.x + 1 \}\}"` (already a number). For literal numbers, use plain YAML: `count: 5`. Remove `convertTo` from your SET steps.
 :::
 
 ## See Also

@@ -14,6 +14,7 @@ ProActions uses specific file naming conventions to enable automatic schema vali
 | `.ai-kit.services.yaml` | Services configuration      | Service definitions (HUB, DEEPL, etc.) |
 | `.ai-kit.menu.yaml`     | Menu configuration          | SLASH_MENU, ONECLICK_MENU              |
 | `.ai-kit.section.yaml`  | Section configuration       | Individual sections in SECTIONS array  |
+| `.ai-kit.module.yaml`   | Block module file           | Reusable blocks imported via `imports:` |
 | `.ai-kit.template.yaml` | Template configuration      | Reusable step templates                |
 | `.ai-kit.action.yaml`   | Single action configuration | Individual action steps                |
 | `.ai-kit.step.yaml`     | Step configuration          | Individual workflow steps              |
@@ -27,6 +28,9 @@ ProActions uses specific file naming conventions to enable automatic schema vali
     ├── services.ai-kit.services.yaml     # Service definitions
     ├── oneclick.ai-kit.menu.yaml         # Oneclick menu
     ├── slash.ai-kit.menu.yaml            # Slash command menu
+    ├── lib/
+    │   ├── common.ai-kit.module.yaml     # Shared block module
+    │   └── editorial.ai-kit.module.yaml  # Section-specific block module
     └── sections/
         ├── headlines.ai-kit.section.yaml
         ├── translation.ai-kit.section.yaml
@@ -65,6 +69,10 @@ Create or update `.vscode/settings.json` in your workspace:
     "https://raw.githubusercontent.com/em-al-wi/proactions-schema/main/schema/partial-floatingMenu.schema.json": [
       "*.ai-kit.menu.yaml",
       "*.ai-kit.menu.yaml*"
+    ],
+    "https://raw.githubusercontent.com/em-al-wi/proactions-schema/main/schema/partial-blocks.schema.json": [
+      "*.ai-kit.module.yaml",
+      "*.ai-kit.module.yaml*"
     ],
     "https://raw.githubusercontent.com/em-al-wi/proactions-schema/main/schema/partial-templates.schema.json": [
       "*.ai-kit.templ.yaml",
@@ -196,6 +204,36 @@ actions:
         at: XPATH
         xpath: "/doc/story/grouphead/headline/p"
 ```
+
+### Module Configuration
+
+Block modules are standalone YAML files that define reusable constants, vars, flows, and scripts. Sections and actions import them by path using `imports:`.
+
+```yaml
+# lib/common.ai-kit.module.yaml
+blocks:
+  constants:
+    defaultModel: gpt-4o
+    apiBase: /SysConfig/ProActions
+
+  vars:
+    userLabel: "{{ flowContext.userName | default('User') }}"
+
+  flows:
+    cleanup:
+      - step: SET
+        text: "{{ flowContext.text | trim }}"
+
+  scripts:
+    slugify: "flowContext.text.toLowerCase().replace(/\\s+/g, '-')"
+
+# A module can itself import from other modules
+imports:
+  - from: ./base-prompts.ai-kit.module.yaml
+    as: prompts
+```
+
+See [Reusable Blocks](../guides/configuration/reusable-blocks.md) for full documentation on module imports, scope levels, and block types.
 
 ## Best Practices
 

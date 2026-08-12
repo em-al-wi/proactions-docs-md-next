@@ -8,6 +8,18 @@ All notable changes to ProActions are documented in this file.
 
 ## Recent Highlights
 
+### What's New in 1.3.0 (April, 2026)
+
+- 🎙️ **Voice Agents** — new `OPENAI_VOICE_AGENT` / `HUB_VOICE_AGENT` steps for full-duplex spoken conversations via the OpenAI Realtime API (WebRTC with automatic WebSocket fallback). Tool calling, skills, and dynamic tool discovery all work mid-session. `vad: { type: push_to_talk }` disables automatic turn detection in favor of an explicit hold-to-talk control in the voice bar.
+- 🧰 **StoryEditor** — a curated, task-level tool provider for editorial agents: safe validated text edits (`searchAndReplaceText`, `appendParagraph`), semantic named fields (`getField`/`setField`), and visual marking (`markSegments`/`clearMarks`) — no custom scripts needed.
+- ⚙️ **Configurable Built-in Tools** — `builtinTools` class entries now accept a `config:` block, validated against each provider's declared options and resolved from templates once per session (`{{ imports.env.doc.headline }}`, etc.).
+- 🎯 **Conditional Tool & Skill Exposure (`when:`)** — gate `builtinTools`, `tools`, and `skills` entries with a template condition or boolean, evaluated once when the request or voice session is built. Gated-off tools are never advertised to the model and gated-off skills are never fetched.
+- 🔁 **Parallel skill loading & structured tool errors** — skills configured on a completion or voice step now load concurrently instead of sequentially; builtin tool failures are now reported through a dedicated error signal instead of string-matching content, so a tool result that happens to start with "Error:" is no longer misclassified as a failure.
+- ⚡ **Native-typed expression resolution** — `{{ … }}` templates now return native values (objects, arrays, numbers, booleans) when the entire YAML value is one expression. Dotted paths like `{{ flowContext.object.findings }}` work directly with steps such as `MONITOR_TABLE`. No more SET-alias workarounds.
+- 🔢 **Automatic numeric coercion in SET / WHILE / BREAK** — numeric expressions like `{{ flowContext.counter + 1 }}` already yield a number. `convertTo: "number"` is no longer needed and is now soft-deprecated.
+- 🚀 **Resolver performance** — added a dedicated path-only fast-path for `{{ flowContext.x.y.z }}` that bypasses Nunjucks entirely. Hot-path `isAvailable` checks stay sub-microsecond.
+- 🔌 **Generic deprecation warnings** — new internal helper for deduplicated, action-scoped deprecation warnings surfaced through the FlowMonitor diagnostic stream.
+
 ### What's New in 1.2.0 (April, 2026)
 
 - 📊 **Flow Monitor** - Real-time visualization and control of running workflows
@@ -59,6 +71,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Version History
 
+- [1.3.0 - (unreleased)](#130---unreleased) - Voice Agents, StoryEditor, configurable/conditional built-in tools, native-typed expressions
 - [1.2.0 - April 23, 2026](#120---april-23-2026) - Flow Monitor, Agent Skills, Built-in AI Tools, MCP Integration, Block Drop
 - [1.1.0 - October 24, 2025](#110---october-24-2025) - Interactive Diff, Swing Integration, Enhanced Workflows
 - [1.0.12 - February 7, 2025](#1012---february-7-2025) - Slash Menu, ElevenLabs, Prime 8
@@ -75,6 +88,176 @@ All notable changes to ProActions are documented in this file.
 ---
 
 ## Detailed Release Notes
+
+### 1.3.0 - (unreleased)
+
+**🎙️ Voice Agents**
+
+Two new steps run full-duplex voice sessions against the OpenAI Realtime API: the model listens through the microphone, speaks its responses, and can call tools while talking.
+
+- **`OPENAI_VOICE_AGENT`** — connects directly using a short-lived ephemeral key. Defaults to WebRTC (native echo cancellation, automatic barge-in truncation) with automatic WebSocket fallback if the connection can't be established.
+- **`HUB_VOICE_AGENT`** — identical, routed through ProActions Hub over WebSocket for centralized key management.
+- Configurable voice activity detection (`semantic_vad`, `server_vad`, or `push_to_talk`), server-side noise reduction, reasoning effort, and transcription model.
+- **Push-to-talk** (`vad: { type: push_to_talk }`) turns off server-side turn detection entirely — the user opens and closes the mic explicitly via a hold control (mouse, touch, or spacebar anywhere in the focused monitor) in the voice bar. The `bargeIn` option controls what a press does while the agent is speaking: `press` (default) interrupts immediately, `speech` interrupts only once the user's voice is actually detected, `off` never interrupts. Holds shorter than 300ms are discarded as accidental taps rather than sent.
+- `builtinTools`, `tools`, `skills`, `when:`, `config:`, and `autoDiscoverTools` all work inside a voice session, resolved once when the session starts. Dynamically activated tools are pushed into the live session via a Realtime `session.update` — no restart needed.
+- The model ends the session by calling the built-in `end_session` tool, optionally passing a human-readable `summary` and structured `result`. The transcript and summary are written to `flowContext.text`; the result is written to `flowContext.object`. An optional `usage` output exposes accumulated token usage.
+
+```yaml
+- step: OPENAI_VOICE_AGENT
+  behavior: |
+    You are a helpful editorial voice assistant.
+    Complete the requested task, then call end_session with a concise summary.
+  builtinTools:
+    - class: StoryEditor
+      when: '{{ not client.isReadonly() }}'
+      config:
+        fields:
+          headline: '/doc/story/grouphead/headline/p'
+  maxDurationSecs: 300
+```
+
+See the [Voice Agents Guide](./guides/configuration/voice-agents.md) for transports, VAD tuning, and the full tool/skill integration story.
+
+**🧰 StoryEditor — Curated Editorial Tools**
+
+A new built-in tool provider gives agentic flows (text and voice) a safe, task-level editing surface without custom scripts:
+
+- **`searchAndReplaceText`** — finds and replaces the first occurrence of exact text. The replacement is validated (well-formed XML, allowed elements only, whole-document re-check) before it is applied; on rejection the document is left untouched and the model receives a structured hint to correct its call.
+- **`appendParagraph`** — appends a new paragraph, auto-escaping stray ampersands and stripping invalid markup rather than failing the call.
+- **`getField` / `setField`** — read and write named document fields (e.g. `headline`, `summary`) configured once via `config.fields`; the field names appear as an enum in the tool schema, so the model can't request a field that doesn't exist. Both tools are omitted from the session entirely when no fields are configured.
+- **`readStory`, `readSelection`, `readCurrentParagraph`, `replaceCurrentParagraph`, `markSegments`, `clearMarks`** — task-named delegations with editorial defaults (virtual, tolerant-matching marks) baked in.
+
+```yaml
+builtinTools:
+  - class: StoryEditor
+    only: [readStory, searchAndReplaceText, getField, setField]
+    config:
+      fields:
+        headline: '/doc/story/grouphead/headline/p'
+        summary: '/doc/story/summary/p'
+```
+
+`ContentTools` and `HighlightTools` remain the stable low-level primitives that StoryEditor is built on. See the [Built-in AI Tools Reference](./guides/configuration/builtin-ai-tools.md#storyeditor).
+
+**⚙️ Configurable Built-in Tools (`config:`)**
+
+`builtinTools` class entries can now carry a `config:` block, validated against the provider's declared configuration options (unknown keys warn but never fail the flow). `config:` values, alias `args`, and `when:` conditions are all resolved from templates once when the request or voice session is built — including references to `global`/`imports` block constants, so environment-specific facts like xpaths live in one shared module instead of being repeated in every flow.
+
+```yaml
+builtinTools:
+  - class: StoryEditor
+    config:
+      bodyXpath: '{{ imports.env.doc.body }}'
+      allowedElements: [p, h2, h3, ul, li, b, i, u]
+```
+
+**🎯 Conditional Tool & Skill Exposure (`when:`)**
+
+`builtinTools`, user-defined `tools`, and `skills` entries all accept an optional `when:` condition — a template expression or boolean, evaluated once when the request/session is built:
+
+```yaml
+builtinTools:
+  - alias: setHeadline
+    target: replaceTextAtXpath
+    args: { xpath: '/doc/story/headline' }
+    when: '{{ not client.isReadonly() }}'
+skills:
+  - name: xml-editing-rules
+    when: '{{ flowContext.expertMode }}'
+```
+
+A gated-off builtin tool is neither advertised to the model nor executable; a gated-off skill is never fetched from the server. Evaluation is fail-closed — an unresolvable condition logs a warning and disables the entry rather than risk exposing it. See [Conditional Tool Exposure](./guides/configuration/ai-integration.md#conditional-tool-exposure-when).
+
+**🔁 Tool & Skill Reliability Improvements**
+
+- **Parallel skill loading** — skills configured via `skills:` now load concurrently (SKILL.md content and reference listings in flight together) instead of one at a time, cutting the latency cost of multi-skill steps roughly to that of a single skill.
+- **Structured tool execution results** — the builtin tool executor now reports success/failure via a dedicated flag instead of pattern-matching the result content for an `"Error:"` prefix. A tool that legitimately returns text starting with "Error:" is no longer misclassified as a failed call.
+- **`only:` typo detection** — a `builtinTools` class entry's `only:` list is now checked against the class's actual tools; an entry that matches nothing (a typo, or a tool that lives in a different provider) is flagged with a console warning instead of silently vanishing.
+
+**⚡ Native-typed expression resolution**
+
+When the entire YAML value is a single `{{ … }}` expression, the resolver now returns the native JavaScript value instead of the stringified form:
+
+```yaml
+# Before — would stringify to "[object Object],[object Object]" and fail validation
+- step: MONITOR_TABLE
+  data: '{{ flowContext.object.findings }}'
+
+# After — returns the actual array reference, MONITOR_TABLE accepts it directly
+- step: MONITOR_TABLE
+  data: '{{ flowContext.object.findings }}'
+```
+
+This applies to dotted paths, filter chains, function calls, and arbitrary Nunjucks expressions:
+
+| Expression | Returns |
+|---|---|
+| `{{ flowContext.object.items }}` | array (reference preserved) |
+| `{{ flowContext.count + 1 }}` | number |
+| `{{ flowContext.enabled }}` | boolean |
+| `{{ flowContext.items \| sort \| first }}` | object (reference preserved) |
+| `{{ client.isTextSelected() }}` | boolean |
+
+**Interpolated strings stay as strings.** A template embedded in surrounding text — `'Hello {{ flowContext.name }}, you have {{ flowContext.count }} items'` — keeps today's string-rendering behavior. Only *whole-string* expressions return native values.
+
+**🔢 SET `convertTo` is soft-deprecated**
+
+Numeric expressions now naturally yield numbers. `convertTo: "number"` is no longer required:
+
+```yaml
+# Before
+- step: SET
+  count: '{{ flowContext.x + 1 }}'
+  convertTo: "number"
+
+# After
+- step: SET
+  count: '{{ flowContext.x + 1 }}'    # already a number
+```
+
+`convertTo` keeps working through 1.3.x; using it logs a one-time deprecation warning per action via the FlowMonitor diagnostic stream. Hard removal is scheduled for a future major version.
+
+**🚀 Resolver performance improvements**
+
+- Pure-path expressions (`{{ flowContext.x.y.z }}`) bypass Nunjucks entirely — sub-microsecond resolution.
+- Compiled Nunjucks templates are now cached process-wide, so repeated resolution of the same expression (typical inside loops) is significantly faster.
+- Hot-path callbacks like `isAvailable` and `swing.contextMenu.isEnabled` benefit directly.
+
+**⚠️ BREAKING CHANGE: Whole-string expressions return native values**
+
+Authors who took the *string output* of a whole-string `{{ … }}` template and assumed it was always a string need to adjust:
+
+- Removing redundant `convertTo: "number"` from SET steps is recommended (deprecated, see above).
+- Removing the `SET`-alias workaround for `MONITOR_TABLE`, `MONITOR_KEYVALUE`, and similar reference-consuming steps is recommended.
+- Conditions like `{{ flowContext.x }} === "5"` that worked because the resolver stringified the value should be rewritten as `{{ flowContext.x === 5 }}` (or `{{ flowContext.x | string }} === "5"` if the string semantics are intentional).
+- Missing paths in whole-string expression mode now return `undefined` instead of the empty string. Use the `default` filter for an explicit fallback: `{{ flowContext.maybeMissing | default('') }}`.
+- **Truthy/falsy semantics in `IF`, `WHILE`, and other conditional steps now follow native JavaScript rules.** Previously, the value of `condition: '{{ flowContext.x }}'` was stringified before evaluation, so `count: 0` was truthy (because `"0"` is a non-empty string) and `items: []` was falsy (because `[]` stringifies to `""`). Native semantics flip both: `0` is now falsy, `[]` is now truthy, and `NaN` is now falsy. Audit numeric checks (use `{{ flowContext.count > 0 }}` instead of `{{ flowContext.count }}`) and array-emptiness checks (use `{{ flowContext.items.length > 0 }}`).
+
+**⚠️ BREAKING CHANGE: Malformed Nunjucks templates throw instead of warn-and-passthrough**
+
+Previously, a render error inside an interpolated string (e.g. `'prefix {{ broken | nonexistent_filter }} suffix'`) was caught, logged via `console.warn`, and the original unrendered text was returned. The error is now propagated to the caller. This surfaces real authoring bugs that were previously silenced. Wrap calls in your own error handler if you genuinely want degradation, or — preferably — fix the broken expression. The wrapping `resolveToBoolean` helper (used by `IF`/`WHILE` conditions) keeps its existing catch-and-return-false behavior, so conditional flow control is unaffected.
+
+**⚠️ BREAKING CHANGE: `actionContext` placeholder removed**
+
+The legacy `actionContext` placeholder name has been removed. It was an early-stage alias for `flowContext` that has been redundant for several releases.
+
+**Migration:** find-and-replace `actionContext.` → `flowContext.` across YAML configs:
+
+```yaml
+# Before
+- step: HUB_COMPLETION
+  instruction: 'Translate: {actionContext.text}'
+
+# After
+- step: HUB_COMPLETION
+  instruction: 'Translate: {flowContext.text}'
+```
+
+Both single-brace (`{actionContext.X}`) and double-brace (`{{ actionContext.X }}`) forms are affected. Configs using the old name will silently stop resolving:
+- Single-brace: the placeholder is left as a literal string in the output.
+- Double-brace: the expression returns `undefined` (or, in interpolated context, an empty string).
+
+The two are exact synonyms today, so the replacement is mechanical and safe.
 
 ### 1.2.0 - April 23, 2026
 
@@ -1346,6 +1529,27 @@ New steps for image processing:
 ---
 
 ## Migration Notes
+
+### Upgrading to 1.3.0
+
+**⚠️ Whole-string `{{ … }}` returns native values (Action Required if you wrote workarounds)**
+
+- Drop redundant `convertTo: "number"` from SET steps (still works in 1.3.x; will be removed later).
+- Drop the SET-alias workaround for `MONITOR_TABLE` / `MONITOR_KEYVALUE` / similar steps. Pass `'{{ flowContext.object.findings }}'` directly.
+- Audit conditions that compared `{{ flowContext.x }}` to a string literal — they may now compare a native value (number/boolean) to a string and silently fail.
+- Audit `IF` / `WHILE` conditions written as `condition: '{{ flowContext.x }}'`. Truthy/falsy is now native JS: `0`, `NaN` are falsy; `[]` is truthy. Use `{{ flowContext.count > 0 }}` for numeric "is set" checks and `{{ flowContext.items.length > 0 }}` for array emptiness.
+
+**⚠️ Malformed Nunjucks templates now throw (Action Required only if you relied on silent degradation)**
+
+- Render errors in interpolated strings (e.g. `'prefix {{ broken | nonexistent_filter }} suffix'`) used to log via `console.warn` and return the unrendered template. They now throw.
+- `IF` / `WHILE` conditions are unaffected because `resolveToBoolean` already catches and returns `false`.
+- Direct callers of `VarResolver.resolve` should fix the broken expression rather than re-introduce the swallow.
+
+**⚠️ `actionContext` placeholder removed (Action Required)**
+
+- Find-and-replace `actionContext.` → `flowContext.` across all YAML configs.
+- Affects both `{actionContext.X}` and `{{ actionContext.X }}` forms.
+- The two were exact synonyms; replacement is mechanical and safe.
 
 ### Upgrading to 1.1.0
 

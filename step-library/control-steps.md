@@ -26,7 +26,6 @@ Breaks out of the current loop (e.g., WHILE or FOR) based on the given condition
    do:
      - step: SET
        counter: "{{ flowContext.counter + 1 }}"
-       convertTo: "number"
      - step: BREAK
        condition: "{{ flowContext.counter == 5 }}"
  
@@ -270,7 +269,6 @@ Sets variables in the flow context. Can execute steps, evaluate expressions, or 
    userId: "{{ flowContext.currentUser.id }}"
    isActive: true
    count: 5
-   convertTo: "number"
  
 ```
 
@@ -381,7 +379,6 @@ Repeatedly executes a set of steps while a condition evaluates to true.
    do:
      - step: SET
        counter: "{{ flowContext.counter + 1 }}"
-       convertTo: "number"
      - step: SHOW_NOTIFICATION
        message: "Iteration {{flowContext.counter}}"
  

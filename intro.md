@@ -23,6 +23,7 @@ ProActions allows you to create and execute powerful workflow automations compos
 - **YAML-based Configuration**: Define your workflows in simple, readable YAML files
 - **Platform Support**: Works in both Swing Web Client and Prime Windows Client
 - **Service Integration**: Connect to OpenAI, DeepL, ElevenLabs, Stability AI, and custom REST APIs
+- **Voice Agents**: Full-duplex spoken conversations with tool calling, powered by the OpenAI Realtime API ([guide](./guides/configuration/voice-agents.md))
 - **Dynamic Forms**: Automatically generate user interfaces from configuration
 - **Command Palette**: Quick access to actions via Ctrl+K
 

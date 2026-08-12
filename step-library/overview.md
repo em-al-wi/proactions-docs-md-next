@@ -134,6 +134,8 @@ Prime: Supports paths, UUIDs, and LOIDs (auto-formatted). Options insertionType,
 
 - **[HUB_TRANSCRIPTION](./steps/HUB_TRANSCRIPTION.md)** - Hub-compatible transcription step (delegates to hub service). Writes transcription text and optional segments list.
 
+- **[HUB_VOICE_AGENT](./steps/HUB_VOICE_AGENT.md)** - Full-duplex voice session routed through ProActions Hub (WebSocket only — a proxy cannot relay WebRTC media). Same capabilities as OPENAI_VOICE_AGENT but uses Hub for centralized API key management and request routing.
+
 - **[OPENAI_ASSISTANT](./steps/OPENAI_ASSISTANT.md)** - Create or reuse an OpenAI assistant. If cfg.assistantId is provided the assistant will be retrieved; otherwise a new assistant is created. The created or retrieved assistant is written to the flow context.
 
 - **[OPENAI_COMPLETION](./steps/OPENAI_COMPLETION.md)** - Chat/completion step that calls OpenAI (or Hub/Azure variants). Supports messages, images, audio, attachments, tools (functions), structured outputs (json_schema/json_object/list), reasoning and audio output. Many step-level configuration options are supported via cfg.*.
@@ -151,6 +153,8 @@ Prime: Supports paths, UUIDs, and LOIDs (auto-formatted). Options insertionType,
 - **[OPENAI_THREAD_MESSAGE](./steps/OPENAI_THREAD_MESSAGE.md)** - Send a message to a thread/assistant. The assistant and thread inputs are required. The message can be provided via cfg.instruction or via default text input. The assistant response text is stored in the default text output.
 
 - **[OPENAI_TRANSCRIPTION](./steps/OPENAI_TRANSCRIPTION.md)** - Transcribe audio using OpenAI (or Azure/Hub variants). Reads an audio file/blob from inputs and writes the transcription text and optional segment list.
+
+- **[OPENAI_VOICE_AGENT](./steps/OPENAI_VOICE_AGENT.md)** - Full-duplex voice session using the OpenAI Realtime API over WebRTC (default, with automatic WebSocket fallback). Captures microphone input, streams to the model, plays back the spoken response, and accumulates a conversation transcript. Supports tool calls and structured results.
 
 - **[STABILITY_AI_OUTPAINT](./steps/STABILITY_AI_OUTPAINT.md)** - Outpaint an image region using StabilityAI. Supports coordinates (left,right,up,down) to define the outpainting area.
 

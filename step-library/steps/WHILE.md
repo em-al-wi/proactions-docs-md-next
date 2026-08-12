@@ -33,7 +33,6 @@ Repeatedly executes a set of steps while a condition evaluates to true.
    do:
      - step: SET
        counter: "{{ flowContext.counter + 1 }}"
-       convertTo: "number"
      - step: SHOW_NOTIFICATION
        message: "Iteration {{flowContext.counter}}"
  ```
