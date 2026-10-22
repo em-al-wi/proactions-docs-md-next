@@ -13,6 +13,14 @@ List available tools from an MCP server via the Hub.
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_MCP_TOOLS** to discover tools exposed by all or one Hub-connected MCP server.
+
+## Data Flow
+
+Reads a resolved `server` value. Writes the tool list result to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

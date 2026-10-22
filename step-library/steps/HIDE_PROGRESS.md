@@ -12,6 +12,14 @@ Hide any shown progress bar.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **HIDE_PROGRESS** to dismiss an active progress bar when work is complete or no longer relevant.
+
+## Data Flow
+
+Does not read or write flow context.
+
 ## Examples
 
 ### Hide progress bar

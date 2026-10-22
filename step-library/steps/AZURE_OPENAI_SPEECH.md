@@ -18,6 +18,14 @@ Documentation partly inherited from `OPENAI_SPEECH`.
 - **Scope:** all
 - **Default Service:** AZURE_OPENAI_SPEECH
 
+## When to Use
+
+Use **AZURE_OPENAI_SPEECH** when flow text must be converted to speech through Azure OpenAI.
+
+## Data Flow
+
+Reads `text` or its configured input name. Writes generated audio to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

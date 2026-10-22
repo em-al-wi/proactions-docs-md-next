@@ -131,7 +131,7 @@ ProActions supports structured AI responses:
   response_format: "json_object"
 
 - step: SHOW_NOTIFICATION
-  message: "Sentiment: {{ flowContext.sentiment }}"
+  message: "Sentiment: {{ flowContext.object.sentiment }}"
 ```
 
 ### HUB_TRANSCRIPTION: Speech-to-Text

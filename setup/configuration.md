@@ -8,10 +8,13 @@ After installing ProActions, you need to create configuration files to define se
 
 ## Minimum Required Configuration
 
-At minimum, you need two configuration files:
+At minimum, you need one configuration file:
 
 1. **Main configuration file**: `/SysConfig/pro-actions.ai-kit.yaml`
-2. **Service configuration file**: `/SysConfig/ProActions/services.ai-kit.services.yaml`
+
+A separate **service configuration file** (`/SysConfig/ProActions/services.ai-kit.services.yaml`)
+is optional — services can also be defined inline in the main file — but is recommended for
+organization once you have more than one or two services.
 
 ## Step 1: Create Main Configuration File
 
@@ -240,7 +243,7 @@ ProActions provides variables you can use immediately:
 - `{textContent}` - Full document text
 - `{selectedText}` - Selected text
 - `{xmlContent}` - Full document XML
-- `{userName}` - Current user's name
+- `{{ client.getUserName() }}` - Current user's name
 - `{BASE_URL}` - Your Swing instance URL
 
 **Example:**

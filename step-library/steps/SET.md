@@ -35,6 +35,10 @@ Use **SET** when you need to create or modify variables in the workflow context 
 - **PROMPT** - For simple single-value user input
   
 
+## Data Flow
+
+Reads values from resolved expressions/templates and from nested `steps`. Writes configured key/value pairs or the legacy named/text value into flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
@@ -93,7 +97,7 @@ Use **SET** when you need to create or modify variables in the workflow context 
 
 **Why:** Whole-string \{\{ … \}\} templates now return native types automatically. \{\{ flowContext.count + 1 \}\} yields a number; \{\{ flowContext.flag \}\} yields a boolean; \{\{ flowContext.items \}\} yields the actual array reference.
 
-**Solution:** Write the expression directly: `count: "\{\{ flowContext.x + 1 \}\}"` (already a number). For literal numbers, use plain YAML: `count: 5`. Remove `convertTo` from your SET steps.
+**Solution:** Write the expression directly: `count: "{{ flowContext.x + 1 }}"` (already a number). For literal numbers, use plain YAML: `count: 5`. Remove `convertTo` from your SET steps.
 :::
 
 ## See Also

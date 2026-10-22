@@ -13,6 +13,14 @@ Create or reuse an OpenAI assistant. If cfg.assistantId is provided the assistan
 - **Scope:** all
 - **Default Service:** OPENAI_COMPLETION
 
+## When to Use
+
+Use **OPENAI_ASSISTANT** to create or load a reusable Assistants API assistant before threaded interactions.
+
+## Data Flow
+
+Reads resolved instruction and model values. Writes the created or retrieved assistant to `assistant` or its configured output name; it can persist the ID outside flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

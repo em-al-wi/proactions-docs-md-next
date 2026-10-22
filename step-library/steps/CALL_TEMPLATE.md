@@ -13,6 +13,14 @@ Calls a reusable flow by legacy template name (`name`) or scoped reference (`ref
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **CALL_TEMPLATE** to reuse a named or scoped template flow without duplicating its steps.
+
+## Data Flow
+
+Reads the resolved template name or reference. Writes all outputs produced by the called template into flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

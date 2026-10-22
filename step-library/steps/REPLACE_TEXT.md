@@ -13,6 +13,14 @@ Replace existing text at the given location (cursor paragraph, cursor or xpath) 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **REPLACE_TEXT** to replace text at the cursor, cursor paragraph, or an XPath target.
+
+## Data Flow
+
+Reads `text` or a value resolved from `in`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

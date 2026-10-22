@@ -13,6 +13,14 @@ Insert a list of items into the document. The items can be provided as a list in
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **INSERT_LIST** to insert a list from structured items or newline-delimited text.
+
+## Data Flow
+
+Reads `list`; if absent, reads `text` or a value resolved from `in`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

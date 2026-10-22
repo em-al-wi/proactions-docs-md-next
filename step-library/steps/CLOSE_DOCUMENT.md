@@ -12,6 +12,14 @@ Closes the current document without saving.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **CLOSE_DOCUMENT** to close the active document without saving it.
+
+## Data Flow
+
+Does not read or write flow context.
+
 ## Examples
 
 ### Close the current document

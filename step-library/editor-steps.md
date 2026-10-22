@@ -7,6 +7,77 @@ Steps in the Editor category.
 ## Available Steps
 
 
+### [APPLY_TEXT_CUTS](./steps/APPLY_TEXT_CUTS.md)
+
+Cuts a story to length from LLM cut candidates: every candidate is measured, alternatives and nested removals are detected, and the cuts needed for the target are preselected. In review mode the Flow Monitor shows a cut panel with a live meter and editor highlights, and writes the chosen cuts in one validated batch.
+
+
+
+
+**Version:** 1.0.0
+
+
+
+**Example:**
+```yaml
+
+ - step: GET_STORY_BLOCKS
+   showLength: true
+   outputs: [{ type: text, name: blocks }]
+ - step: MONITOR_INPUT
+   message: "How many characters must be cut?"
+   required: true
+   outputs: [{ type: text, name: cutByText }]
+ - step: OPENAI_COMPLETION
+   response_format: text_cuts
+   behavior: |
+     You are a newspaper editor proposing cuts. Never change facts, names, numbers or quotes.
+     Prefer deleting low-value blocks and sentences over rewriting. Give every cut a priority
+     and put alternative cuts of the same passage in one group.
+   instruction: "{{ flowContext.blocks }}"
+ - step: APPLY_TEXT_CUTS
+   mode: review
+   cutBy: "{{ flowContext.cutByText }}"
+   charsPerLine: 34
+   allowMore: true
+
+```
+
+
+---
+
+
+### [APPLY_TEXT_EDITS](./steps/APPLY_TEXT_EDITS.md)
+
+Applies LLM edits to the story through the story-block engine: text and inline formatting inside a block, whole-block rewrites, comments, and structural operations (insert, delete, split, merge, move, retype). Hidden markup — links, captions, embedded objects, editor placeholders — is preserved. Invalid edits change nothing and are reported with a hint.
+
+
+
+
+**Version:** 1.0.0
+
+
+
+**Example:**
+```yaml
+
+ - step: GET_STORY_BLOCKS
+ - step: OPENAI_COMPLETION
+   response_format: text_edits
+   behavior: |
+     You are a proofreader. Fix spelling and grammar only. Never change meaning or formatting.
+     Use op "rewrite" for blocks with several fixes and op "replace" for single words.
+   instruction: "{{ flowContext.text }}"
+ - step: APPLY_TEXT_EDITS
+   mode: review
+   allowedOps: [replace, rewrite, comment]
+
+```
+
+
+---
+
+
 ### [CLEAR_SELECTION](./steps/CLEAR_SELECTION.md)
 
 Clears the current text selection and optionally repositions the cursor to the start or end of the selection. Available in Swing editor context only.
@@ -90,6 +161,28 @@ Retrieves the full pure text content from the current document and sets it as ou
 ```yaml
 
  - step: GET_PURE_TEXT
+
+```
+
+
+---
+
+
+### [GET_STORY_BLOCKS](./steps/GET_STORY_BLOCKS.md)
+
+Reads the document as numbered, role-labelled text blocks for whole-document LLM use cases (proofreading, spell checking, style fixes). Inline formatting such as \<b> is shown, all other markup is hidden and protected. Feed the output to an LLM and apply its answer with APPLY_TEXT_EDITS.
+
+
+
+
+**Version:** 1.0.0
+
+
+
+**Example:**
+```yaml
+
+ - step: GET_STORY_BLOCKS
 
 ```
 

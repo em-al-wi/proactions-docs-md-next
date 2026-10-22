@@ -75,6 +75,10 @@ Browse steps by category:
 ### Editor
 
 
+- **[APPLY_TEXT_CUTS](./steps/APPLY_TEXT_CUTS.md)** - Cuts a story to length from LLM cut candidates: every candidate is measured, alternatives and nested removals are detected, and the cuts needed for the target are preselected. In review mode the Flow Monitor shows a cut panel with a live meter and editor highlights, and writes the chosen cuts in one validated batch.
+
+- **[APPLY_TEXT_EDITS](./steps/APPLY_TEXT_EDITS.md)** - Applies LLM edits to the story through the story-block engine: text and inline formatting inside a block, whole-block rewrites, comments, and structural operations (insert, delete, split, merge, move, retype). Hidden markup — links, captions, embedded objects, editor placeholders — is preserved. Invalid edits change nothing and are reported with a hint.
+
 - **[CLEAR_SELECTION](./steps/CLEAR_SELECTION.md)** - Clears the current text selection and optionally repositions the cursor to the start or end of the selection. Available in Swing editor context only.
 
 - **[CLEAR_TAGS](./steps/CLEAR_TAGS.md)** - Removes all occurrences of the specified tags from the document or report while preserving their text content. This is useful for cleaning up temporary markup or removing specific tag types.
@@ -82,6 +86,8 @@ Browse steps by category:
 - **[CLOSE_DOCUMENT](./steps/CLOSE_DOCUMENT.md)** - Closes the current document without saving.
 
 - **[GET_PURE_TEXT](./steps/GET_PURE_TEXT.md)** - Retrieves the full pure text content from the current document and sets it as output.
+
+- **[GET_STORY_BLOCKS](./steps/GET_STORY_BLOCKS.md)** - Reads the document as numbered, role-labelled text blocks for whole-document LLM use cases (proofreading, spell checking, style fixes). Inline formatting such as \<b> is shown, all other markup is hidden and protected. Feed the output to an LLM and apply its answer with APPLY_TEXT_EDITS.
 
 - **[GET_TEXT_CONTENT](./steps/GET_TEXT_CONTENT.md)** - Retrieves text content from the document or a specific location and sets it as output.
 

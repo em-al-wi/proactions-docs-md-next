@@ -15,7 +15,7 @@ Use single braces `{}` for built-in ProActions variables:
   instruction: "Process: {textContent}"
 
 - step: SHOW_NOTIFICATION
-  message: "User: {userName}"
+  message: "Selected: {selectedText}"
 ```
 
 ### Template Expressions (Double Braces)

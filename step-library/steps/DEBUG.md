@@ -12,6 +12,14 @@ Logs debug information about the current flow context and step configuration. Op
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **DEBUG** while authoring or troubleshooting a flow to inspect its current runtime state.
+
+## Data Flow
+
+Reads and logs flow context. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

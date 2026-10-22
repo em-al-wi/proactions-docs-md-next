@@ -57,6 +57,8 @@ AI-Link provides OpenAI-compatible endpoints:
 - **Audio Transcription:** `POST /v1/audio/transcriptions`
 - **Audio Translation:** `POST /v1/audio/translations`
 
+These HTTP endpoints do not provide OpenAI Realtime sessions. `HUB_VOICE_AGENT` requires the separate `WSS /proactions/realtime` relay, an OpenAI Realtime-capable target, and a compatible Hub deployment. See [Hub Voice Agent](../configuration.md#hub-voice-agent-realtime-websocket).
+
 ## Streaming
 
 The Hub natively proxies Server-Sent Events (SSE) streaming responses. Set `"stream": true` in the request body and the Hub forwards the upstream SSE stream directly to the client.

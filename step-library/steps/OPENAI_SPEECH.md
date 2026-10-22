@@ -14,6 +14,14 @@ Generate speech audio using the OpenAI Speech API (or corresponding Hub/Azure va
 - **Scope:** all
 - **Default Service:** OPENAI_SPEECH
 
+## When to Use
+
+Use **OPENAI_SPEECH** when flow text must be converted to speech through an OpenAI-compatible service.
+
+## Data Flow
+
+Reads `text` or its configured input name. Writes generated audio to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

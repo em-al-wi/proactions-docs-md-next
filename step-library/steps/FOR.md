@@ -12,6 +12,14 @@ Executes a set of steps for a fixed number of iterations (numeric) or iterates o
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **FOR** to run a sequence of steps for each item in an array or each value in an inclusive numeric range.
+
+## Data Flow
+
+Reads resolved items or range configuration. Writes the configured iteration variable and a companion index key named after that variable; writes from each `do` subflow are merged into flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

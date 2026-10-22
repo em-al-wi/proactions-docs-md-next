@@ -182,7 +182,7 @@ Display a confirmation dialog in the Flow Monitor. Pauses workflow until user re
 
 
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 
 

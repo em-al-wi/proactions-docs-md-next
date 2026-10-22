@@ -30,6 +30,10 @@ Use **MONITOR_INPUT** for quick inline text input without opening a modal dialog
 - You need selection from options → use **MONITOR_CHOICE**
   
 
+## Data Flow
+
+Reads flow context values referenced by resolved message, placeholder, and default. Writes entered text to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
@@ -38,7 +42,7 @@ Use **MONITOR_INPUT** for quick inline text input without opening a modal dialog
 | `default` | Default value pre-filled in the input field. | None |false| true |None|None|
 | `required` | If true, empty input is not allowed. | false |false| false |None|None|
 | `maxLength` | Maximum number of characters allowed. | None |false| false |None|None|
-| `errorMessage` | Error message shown when the field is submitted empty and required is true. | This field is required |false| true |None|None|
+| `errorMessage` | Error message shown when the field is submitted empty and required is true. Defaults to the localized "This field is required". | None |false| true |None|None|
 
 ## Outputs
 | Type | Description | Optional |

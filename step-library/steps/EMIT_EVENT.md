@@ -13,6 +13,14 @@ Emits a custom internal event that can trigger other actions subscribed via acti
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **EMIT_EVENT** to signal other event-driven actions after a workflow reaches a meaningful state.
+
+## Data Flow
+
+Reads flow context values referenced by resolved event name and payload. Does not write flow context; emits an internal event for subscribed actions.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

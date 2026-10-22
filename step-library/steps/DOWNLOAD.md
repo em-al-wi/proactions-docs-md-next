@@ -13,6 +13,14 @@ Downloads a file constructed from text or an existing Blob. The filename is requ
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **DOWNLOAD** to save generated text or an existing Blob as a named file on the user machine.
+
+## Data Flow
+
+Reads `filename` and either `text` or `blob` from flow context or configured inputs. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

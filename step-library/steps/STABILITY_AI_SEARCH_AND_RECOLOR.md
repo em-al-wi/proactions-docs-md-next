@@ -14,6 +14,14 @@ Search and recolor elements in an image using StabilityAI. Provide select_prompt
 - **Scope:** all
 - **Default Service:** STABILITY_AI
 
+## When to Use
+
+Use **STABILITY_AI_SEARCH_AND_RECOLOR** when selected elements in an image must be recolored.
+
+## Data Flow
+
+Reads `blob`, optional `imageName`, and resolved `select_prompt` and `prompt`. Writes the processed image to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

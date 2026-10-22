@@ -13,6 +13,14 @@ Create or reuse an OpenAI thread. If cfg.reuse and cfg.storeIn are provided the 
 - **Scope:** all
 - **Default Service:** OPENAI_COMPLETION
 
+## When to Use
+
+Use **OPENAI_THREAD** to establish a persistent Assistants API conversation thread.
+
+## Data Flow
+
+Reads no flow context values. Writes the created or reused thread to `thread` or its configured output name; it can persist the ID outside flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

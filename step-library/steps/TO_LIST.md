@@ -13,6 +13,14 @@ Convert a textual AI response into a list of strings. Detects JSON arrays, order
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **TO_LIST** to convert JSON arrays, Markdown lists, CSV, or plain text into a string list for later steps.
+
+## Data Flow
+
+Reads `text` or its configured input name. Writes the parsed values to `list` or its configured output name.
+
 ## Inputs
 | Type | Description | Default | Required | Resolved |
 |---|---|:---:|:---:|:---:|

@@ -68,7 +68,7 @@ Place DEBUG steps at key points in your flow:
 
 ```yaml
 - step: DEBUG
-  message: "Check if myVar exists"
+  id: "Check if myVar exists"
 
 - step: SHOW_NOTIFICATION
   message: "Value: {{ flowContext.myVar }}"
@@ -100,17 +100,17 @@ Place DEBUG steps at key points in your flow:
 - step: TRY
   try:
     - step: DEBUG
-      message: "Before LLM call"
+      id: "Before LLM call"
 
     - step: HUB_COMPLETION
       instruction: "Test"
       max_tokens: 10
 
     - step: DEBUG
-      message: "After LLM call - response received"
+      id: "After LLM call - response received"
   catch:
     - step: DEBUG
-      message: "Error occurred"
+      id: "Error occurred"
 
     - step: SHOW_NOTIFICATION
       message: "Service error: {{ flowContext.error.message }}"
@@ -484,11 +484,11 @@ Click on a request to see:
 ```yaml
 # Good
 - step: DEBUG
-  message: "After fetching text content - checking selectedText"
+  id: "After fetching text content - checking selectedText"
 
 # Avoid
 - step: DEBUG
-  message: "Debug 1"
+  id: "Debug 1"
 ```
 
 ### 3. Remove Debug Steps in Production
@@ -499,7 +499,7 @@ Comment out or remove DEBUG steps before deploying:
 - title: 'Production Flow'
   flow:
     # - step: DEBUG
-    #   message: "Debug: Starting flow"
+    #   id: "Debug: Starting flow"
 
     - step: HUB_COMPLETION
       instruction: "Process: {textContent}"
@@ -514,7 +514,7 @@ Comment out or remove DEBUG steps before deploying:
       instruction: "Process: {textContent}"
   catch:
     - step: DEBUG
-      message: "Error details"
+      id: "Error details"
 
     - step: SHOW_NOTIFICATION
       notificationType: error

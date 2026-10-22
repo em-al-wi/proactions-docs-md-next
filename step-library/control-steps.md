@@ -179,7 +179,7 @@ Execute a conditional branch based on a condition
 ```yaml
 
  - step: IF
-   condition: "{{ userInput === 'yes' }}"
+   condition: "{{ flowContext.userInput == 'yes' }}"
    then:
      - step: SHOW_NOTIFICATION
        message: "Proceeding..."

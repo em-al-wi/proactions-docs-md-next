@@ -12,6 +12,14 @@ Repeatedly executes a set of steps while a condition evaluates to true.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **WHILE** to repeat steps until a context-dependent condition becomes false or a BREAK occurs.
+
+## Data Flow
+
+Reads flow context values referenced by `condition` or legacy `test` each iteration. Writes from each `do` subflow are preserved.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -12,6 +12,14 @@ Update an existing progress bar. Provide percentage (0-100) and optional status 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **UPDATE_PROGRESS** to update the percentage or status of an already displayed progress bar.
+
+## Data Flow
+
+Reads resolved percentage and status values from flow context or config. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

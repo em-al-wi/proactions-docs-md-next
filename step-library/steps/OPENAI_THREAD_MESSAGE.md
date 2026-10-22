@@ -13,6 +13,14 @@ Send a message to a thread/assistant. The assistant and thread inputs are requir
 - **Scope:** all
 - **Default Service:** OPENAI_COMPLETION
 
+## When to Use
+
+Use **OPENAI_THREAD_MESSAGE** to send a prompt through an assistant and thread pair and receive its response.
+
+## Data Flow
+
+Reads `assistant`, `thread`, and resolved instruction or `text`. Writes the assistant response to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

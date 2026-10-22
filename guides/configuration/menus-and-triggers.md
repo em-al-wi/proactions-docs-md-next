@@ -218,6 +218,10 @@ AI_KIT:
     - !include /SysConfig/ProActions/sections/slash-actions.yaml
 ```
 
+**Note:** Menu initialization is currently gated on `TEXT_MENU` or `ONECLICK_MENU` being configured
+for the editor area — `SLASH_MENU` alone does not trigger initialization. Configure at least one
+of `TEXT_MENU` or `ONECLICK_MENU` alongside `SLASH_MENU` for the slash menu to activate.
+
 ### How It Works
 
 1. **Trigger**: Type `/` in an empty or existing paragraph

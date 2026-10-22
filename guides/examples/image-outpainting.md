@@ -209,9 +209,8 @@ The UPDATE_BINARY_CONTENT step saves the outpainted image:
 
 This:
 
-- Creates a new version of the image
 - Preserves metadata
-- Updates the binary content with the outpainted result
+- Updates the binary content with the outpainted result, without creating a new version
 
 ## Best Practices
 

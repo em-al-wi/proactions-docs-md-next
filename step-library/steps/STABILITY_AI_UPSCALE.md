@@ -14,6 +14,14 @@ Upscale an image using StabilityAI upscale endpoint. Uploads a provided image bl
 - **Scope:** all
 - **Default Service:** STABILITY_AI
 
+## When to Use
+
+Use **STABILITY_AI_UPSCALE** when an existing image must be enlarged through StabilityAI conservative upscale.
+
+## Data Flow
+
+Reads `blob`, optional `imageName`, and a resolved prompt. Writes the processed image to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -71,21 +71,22 @@ ProActions supports monitor configuration at three levels:
 
 2. **Section-Level Configuration** (`monitor` property):
    - Overrides global settings for all actions in a section
-   - Only includes behavioral settings (cannot change position, theme, etc.)
+   - Includes behavioral settings plus `defaultWidth`/`defaultHeight` size overrides (cannot change `position`, `theme`, etc.)
    - Supports `entryFadeDelay` and `allowEntryDismiss` overrides
    - `enabled` is boolean only (`true` or `false`, NOT `'ondemand'`)
    - All properties are optional
 
 3. **Action-Level Configuration** (`monitor` property):
    - Overrides global and section settings for a specific action
-   - Same properties as section-level (behavioral settings only)
+   - Same properties as section-level
    - Supports `entryFadeDelay` and `allowEntryDismiss` overrides
    - Takes precedence over section and global settings
 
 **Property Inheritance:**
 
 - Action `monitor` → Section `monitor` → Global `MONITOR` → Defaults
-- UI properties (position, theme, etc.) come from global config only
+- Most UI properties (position, theme, etc.) come from global config only; `defaultWidth`/`defaultHeight` are the exception and can be overridden per section/action
+- `defaultWidth`/`defaultHeight` overrides only apply when the user hasn't manually resized the monitor and it isn't maximized
 - Behavioral properties cascade from action → section → global
 
 ### Configuration Options
@@ -150,6 +151,8 @@ Maximum number of concurrent executions to display:
 MONITOR:
   maxVisible: 5 # Show up to 5 running flows
 ```
+
+The newest runs are kept. When older ones are hidden, the pill shows a `+N more` chip and the panel a `+N more` note, so nothing disappears silently.
 
 #### apps
 
@@ -256,8 +259,10 @@ Override monitor settings for specific actions:
 - `renderMarkdown`: boolean - Render markdown in feedback messages
 - `entryFadeDelay`: number - Auto-dismiss delay in ms for this action's entry (0 = disabled)
 - `allowEntryDismiss`: boolean - Show/hide the × dismiss button for this action's entry
+- `defaultWidth`: number - Override the monitor's default width (px) for this action
+- `defaultHeight`: number - Override the monitor's default height (px) for this action
 
-**Note:** Action-level `monitor` cannot control UI properties like `position`, `theme`, `completionFadeDelay`, etc. Those are global-only settings.
+**Note:** Action-level `monitor` cannot control UI properties like `position`, `theme`, `completionFadeDelay`, etc. Those are global-only settings. `defaultWidth`/`defaultHeight` are the exception — they take effect only when the user hasn't manually resized the monitor and it isn't maximized.
 
 ### Section-Level Configuration
 
@@ -391,7 +396,7 @@ Ask user for Yes/No confirmation:
   confirm: 'Delete'
   cancel: 'Cancel'
   outputs:
-    - type: text
+    - type: boolean
       name: confirmed
 
 - step: IF
@@ -520,7 +525,7 @@ aikit.monitor.toggle(); // Returns true if now visible
 
 // Configure at runtime
 aikit.monitor.configure({
-  position: 'bottom-left',
+  position: 'bottom-right',
   theme: 'light',
   completionFadeDelay: 5000,
   maxVisible: 10,
@@ -642,14 +647,24 @@ The monitor operates in two display modes that transition automatically based on
 
 **Mode transitions are content-driven:**
 
-- Flow starts → pill
+- First flow starts → pill (a panel you already have open stays open)
 - Interactive prompt / streaming / structured data arrives → auto-expands to panel
-- User clicks pill → panel
-- User clicks minimize (−) → pill
+- User clicks or keyboard-activates the pill → panel
+- User clicks minimize (−) or presses `M` → pill; a finished panel starts its `completionFadeDelay` countdown at that point
 - Flow completes without summary content → done-pill fades after `completionFadeDelay`
 - Flow completes with summary content → entry stays; user can dismiss with × or it auto-dismisses after `entryFadeDelay` (if configured)
 - Flow completes with `preventAutoHide` feedback → stays visible until dismissed
-- Flow errors → error pill stays visible, click opens panel; user can dismiss manually with ×
+- Flow errors → error pill stays visible, click opens panel; the panel shows the error message (with a collapsible stack trace and a "Copy error" button) and the user dismisses it manually with ×
+
+While a prompt is waiting for an answer, the pill shows **Action required** instead of a progress bar.
+
+**Keyboard and screen readers:**
+
+- The pill is a button: `Tab` to it, `Enter` or `Space` opens the panel
+- The header has a maximize/restore button next to minimize (`double-click` on the header still works too)
+- `Escape` cancels the running flow (or closes the monitor) **only while focus is inside the monitor**; elsewhere the key is left to the host application
+- `M` toggles pill/panel while the monitor has focus
+- Completion, errors and new prompts are announced through an ARIA live region; the elapsed-time timer is not
 
 ### Cancellation Handling
 
@@ -810,7 +825,7 @@ When a user cancels a flow:
       confirm: 'Delete'
       cancel: 'Cancel'
       outputs:
-        - type: text
+        - type: boolean
           name: confirmed
 
     - step: IF

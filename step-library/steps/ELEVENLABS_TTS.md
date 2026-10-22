@@ -13,6 +13,14 @@ Generate speech audio from text using ElevenLabs TTS. Text is taken from the def
 - **Scope:** all
 - **Default Service:** ELEVENLABS
 
+## When to Use
+
+Use **ELEVENLABS_TTS** when flow text must be synthesized with ElevenLabs voices and voice-generation options.
+
+## Data Flow
+
+Reads `text` and optional resolved voice settings from flow context or config. Writes generated audio to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

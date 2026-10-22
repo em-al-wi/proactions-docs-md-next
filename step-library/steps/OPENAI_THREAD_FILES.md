@@ -13,6 +13,14 @@ Create a vector store for thread file tools and optionally upload files. Writes 
 - **Scope:** all
 - **Default Service:** OPENAI_COMPLETION
 
+## When to Use
+
+Use **OPENAI_THREAD_FILES** to create a vector store and attach uploaded documents to a thread file-search resource.
+
+## Data Flow
+
+Reads resolved `name` plus optional `files` and `thread` inputs. Writes the vector store to `store` and optionally uploaded-file metadata to a configured `files` output.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

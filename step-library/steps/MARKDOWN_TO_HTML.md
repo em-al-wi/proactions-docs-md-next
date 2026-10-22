@@ -12,6 +12,14 @@ Converts markdown text to HTML and sets it as text output.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **MARKDOWN_TO_HTML** before displaying or inserting Markdown where HTML is required.
+
+## Data Flow
+
+Reads `text` or its configured input name, falling back to resolved `text` config. Writes HTML to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

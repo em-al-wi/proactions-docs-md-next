@@ -14,6 +14,14 @@ Transcribe audio using OpenAI (or Azure/Hub variants). Reads an audio file/blob 
 - **Scope:** all
 - **Default Service:** OPENAI_TRANSCRIPTION
 
+## When to Use
+
+Use **OPENAI_TRANSCRIPTION** when an audio file or Blob must be transcribed with an OpenAI-compatible speech-to-text service.
+
+## Data Flow
+
+Reads `file` or its configured input name. Writes transcription to `text` and segment text to `list` or configured output names.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

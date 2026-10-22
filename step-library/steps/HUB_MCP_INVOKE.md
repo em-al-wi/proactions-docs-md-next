@@ -13,6 +13,14 @@ Invoke a tool on an MCP server via the Hub.
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_MCP_INVOKE** to execute a named tool on a Hub-connected MCP server with structured arguments.
+
+## Data Flow
+
+Reads resolved `server`, `tool`, and `arguments` values. Writes the invocation result to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

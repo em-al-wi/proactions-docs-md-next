@@ -18,6 +18,14 @@ Documentation partly inherited from `OPENAI_TRANSCRIPTION`.
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_TRANSCRIPTION** when an audio file or Blob must be transcribed through ProActions Hub.
+
+## Data Flow
+
+Reads `file` or its configured input name. Writes transcription to `text` and segment text to `list` or configured output names.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

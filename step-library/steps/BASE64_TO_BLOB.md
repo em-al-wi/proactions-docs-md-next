@@ -12,6 +12,14 @@ Converts a base64-encoded string to a Blob and stores it in the flow context as 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **BASE64_TO_BLOB** when a base64 payload must become a browser Blob for downstream file or media handling.
+
+## Data Flow
+
+Reads a value resolved from `in` or `text`. Writes the Blob to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

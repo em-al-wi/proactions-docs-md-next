@@ -267,7 +267,7 @@ Add actions to the object three-dots menu that appears in search results, previe
       instruction: "Create a brief summary of: {textContent}"
 
     - step: SHOW_NOTIFICATION
-      message: "Summary: {text}"
+      message: "Summary: {{ flowContext.text }}"
 ```
 
 #### Configuration Options

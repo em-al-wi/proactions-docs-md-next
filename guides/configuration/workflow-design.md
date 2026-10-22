@@ -462,7 +462,7 @@ For simpler error handling scenarios, use the `onError` configuration at the act
 - If any step in the `flow` throws an error, execution stops
 - The steps in `onError` are executed instead
 - The error is available in `flowContext.error`
-- After `onError` steps complete, the error is re-thrown (unless handled)
+- The action's result becomes whatever the `onError` steps produce — the original error is not re-thrown
 
 **When to use `onError` vs `TRY/CATCH`:**
 
@@ -585,7 +585,7 @@ retry loop:
 | Value | Behavior |
 |---|---|
 | `retry` (default) | LLM may retry a failed tool call in the same completion |
-| `once` | Each tool is called at most once; failure is passed back to the LLM but not retried |
+| `once` | A tool that has already failed once is skipped on subsequent calls in the same completion; failure is passed back to the LLM but not retried |
 | `fail` | Any tool failure immediately throws an error, stopping the step |
 
 ## Organization and Maintainability
@@ -1016,7 +1016,7 @@ This is the standard approach for transient service errors (rate limits, tempora
 
             # Exponential-style delay: 1 s, 2 s, 3 s
             - step: SLEEP
-              ms: '{{ flowContext.retryCount * 1000 }}'
+              delay: '{{ flowContext.retryCount * 1000 }}'
 
     # After the loop: check whether we eventually succeeded
     - step: IF
@@ -1053,8 +1053,9 @@ Two mechanisms break that linearity: `PARALLEL` (concurrent branches) and `inlin
 ### How `PARALLEL` Merges State
 
 When all branches complete, their `flowContext` changes are **merged back into the main context**.
-The merge is a shallow, last-write-wins operation: if two branches write to the same key, the
-branch that finishes last wins. Design accordingly — **give each branch its own dedicated keys**.
+The merge is a shallow, deterministic operation based on branch order in the `steps` list — later
+branches overwrite keys written by earlier ones, regardless of which branch actually finishes last.
+Design accordingly — **give each branch its own dedicated keys**.
 
 ```yaml
 - title: 'Parallel Analysis'
@@ -1160,7 +1161,8 @@ an item). Steps _after_ the UI step can safely read all background-written state
 
 - Do **not** write to a key inside `inlineSteps` that the outer flow reads before the UI step
   completes — the outer flow is paused waiting for user input, so this is safe, but be aware that
-  `inlineSteps` errors surface as in-modal messages, not as `onError` flow triggers.
+  `inlineSteps` errors are rethrown like any other step failure and are then handled by the
+  action's normal `onError` (or `TRY/CATCH`), not just surfaced as in-modal messages.
 - Do **not** share mutable state between `inlineSteps` branches and the outer flow's pre-UI steps
   if both run concurrently.
 

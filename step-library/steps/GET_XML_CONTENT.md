@@ -13,6 +13,14 @@ Retrieves XML content from the document or a specific location and sets it as ou
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **GET_XML_CONTENT** to retrieve XML from the document, paragraph, report container, or an XPath target.
+
+## Data Flow
+
+Reads no flow context values. Writes XML text to `text` or its configured output name and optionally report XML to a configured `object` output.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

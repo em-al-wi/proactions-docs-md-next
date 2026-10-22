@@ -16,6 +16,14 @@ Shows an image picker modal allowing the user to pick one image from a provided 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **IMAGE_PICKER** when users need to visually select one image object from a supplied image list.
+
+## Data Flow
+
+Reads `imageList` or its configured input name. Writes the selected image to `image` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

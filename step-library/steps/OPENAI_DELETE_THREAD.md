@@ -13,6 +13,14 @@ Delete a thread using its id. Provide the thread object or id via inputs.
 - **Scope:** all
 - **Default Service:** OPENAI_COMPLETION
 
+## When to Use
+
+Use **OPENAI_DELETE_THREAD** to clean up a completed thread when it is no longer needed.
+
+## Data Flow
+
+Reads a thread object from `thread` or its configured input name. Does not write flow context.
+
 ## Inputs
 | Type | Description | Default | Required | Resolved |
 |---|---|:---:|:---:|:---:|

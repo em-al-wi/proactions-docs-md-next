@@ -13,6 +13,14 @@ Initiate OAuth authorization flow for YouTube (requires ProActions-Hub). Opens t
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_YOUTUBE_AUTH_INIT** to begin Hub-managed Google or YouTube OAuth authorization and obtain an authorization URL.
+
+## Data Flow
+
+Reads resolved `account` values. Writes the authorization result to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

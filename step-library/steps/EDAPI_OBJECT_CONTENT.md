@@ -12,6 +12,14 @@ Fetch object content from EDAPI and return it as blob or configured outputs. The
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **EDAPI_OBJECT_CONTENT** to retrieve an EDAPI object content payload as a Blob or selected REST response format.
+
+## Data Flow
+
+Reads resolved `contentId` or `text`. Writes delegated REST outputs, defaulting to `blob`.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

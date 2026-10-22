@@ -12,6 +12,14 @@ Display tabular structured data in the Flow Monitor.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **MONITOR_TABLE** to display an array of structured records as a readable, optionally truncated table.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `data` and `title`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -35,6 +35,10 @@ Use **MONITOR_STATUS** to provide real-time status updates to users during long-
 - \`error\` - Error messages
   
 
+## Data Flow
+
+Reads flow context values referenced by resolved `message`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -12,6 +12,14 @@ Show a progress bar with optional status text. Use `position` to place it and `a
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SHOW_PROGRESS** to initialize and display a zero-percent progress bar with optional status text.
+
+## Data Flow
+
+Reads resolved status values from flow context or config. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

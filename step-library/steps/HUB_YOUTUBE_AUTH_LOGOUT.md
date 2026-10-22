@@ -13,6 +13,14 @@ Log out the configured Hub YouTube account. Uses POST to logout and returns the 
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_YOUTUBE_AUTH_LOGOUT** to revoke or log out the selected Hub YouTube account session.
+
+## Data Flow
+
+Reads resolved `account` values. Writes the logout result to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -354,7 +354,7 @@ For complex logic, use the `SCRIPTING` step:
 
 ```yaml
 - step: SCRIPTING
-  template: |
+  script: |
     flowContext.wordCount = flowContext.textContent.split(' ').length;
     flowContext.readingTime = Math.ceil(flowContext.wordCount / 200);
     return flowContext; // always return the flowContext !

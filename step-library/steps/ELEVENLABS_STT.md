@@ -13,6 +13,14 @@ Transcribe audio using ElevenLabs STT. Provides the transcribed text and optiona
 - **Scope:** all
 - **Default Service:** ELEVENLABS
 
+## When to Use
+
+Use **ELEVENLABS_STT** when an audio file or Blob must be transcribed with ElevenLabs and detailed response data may be needed.
+
+## Data Flow
+
+Reads `file` and optional resolved transcription settings from flow context or config. Writes transcription to `text` and optionally writes the complete response to a configured `json` output.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

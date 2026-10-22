@@ -12,6 +12,14 @@ Adds tags to pure text content in the document. Tags can highlight or annotate s
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **TAG_PURE_TEXT** to add positional persistent or temporary tags to document pure text for later editor or AI processing.
+
+## Data Flow
+
+Reads tags from the resolved `tags` option or list input. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

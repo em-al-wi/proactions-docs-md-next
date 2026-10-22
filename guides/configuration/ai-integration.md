@@ -508,7 +508,7 @@ Config values are never part of the tool schemas the model sees and cannot be se
 
 The **StoryEditor** provider is the curated task-level surface for editorial agents — it also offers `readStory`, `readSelection`, `readCurrentParagraph`, `replaceCurrentParagraph`, and `markSegments`/`clearMarks` with editorial defaults baked in (ContentTools and HighlightTools remain the stable primitive layer underneath). Its hardened editing builtins mean flows no longer need custom scripts for safe content changes:
 
-- **`searchAndReplaceText(search, replace)`** — the preferred way to change article text. Replaces the first exact occurrence inside `bodyXpath`. The replacement fragment must be well-formed and use only `allowedElements`; the **whole updated document** is re-validated before writing, so an edit that would break the XML is rejected with a corrective hint and the document stays untouched. Bare ampersands in the replacement are escaped automatically. An empty `replace` deletes the found text.
+- **`searchAndReplaceText(search, replace)`** — the preferred way to change article text. Replaces the first exact occurrence inside `bodyXpath`. The replacement fragment must be well-formed, use only `allowedElements`, and contain no attributes or processing instructions; the **whole updated document** is re-validated before writing, so an edit that would break the XML is rejected with a corrective hint and the document stays untouched. Structural searches are supported only when `search` is a complete well-formed XML fragment; partial tags, attributes, and matches across markup boundaries return `search_matches_markup` without writing. Bare ampersands in the replacement are escaped automatically. An empty `replace` deletes the found text.
 - **`appendParagraph(text)`** — appends a paragraph at `appendXpath`, allowing the configured `inlineElements` (default `<b>`, `<i>`, `<u>`). Invalid markup is stripped automatically and reported via `note: 'invalid_markup_stripped'` — the session keeps moving instead of retrying on formatting errors.
 
 Both return structured results (`{ found, success, error?, hint? }`) that the model can react to; rejections are normal tool results, not execution errors, so they do not trigger `toolErrorBehavior` tracking.
@@ -771,7 +771,10 @@ builtinTools:
 
 #### Return Value Handling
 
-All user interaction tools return JSON strings. Parse them in workflows:
+All user interaction tools return JSON strings. `flowContext.text` holds the model's own final
+reply, not a tool's raw return value — to read what a tool actually returned, configure an
+`outputs` mapping (or read `flowContext.tool_results`, an array of `{ name, result }` entries) and
+parse from there:
 
 ```yaml
 - step: HUB_COMPLETION
@@ -787,11 +790,13 @@ All user interaction tools return JSON strings. Parse them in workflows:
             label: "Low"
 
 # AI calls: choose_priority("Select priority")
-# Returns: '{"answerId":"high","answerLabel":"High"}'
+# Tool returns: '{"answerId":"high","answerLabel":"High"}'
+# Stored in flowContext.tool_results as [{ name: "choose_priority", result: '{"answerId":"high",...}' }]
 
 - step: SCRIPTING
   script: |
-    const result = JSON.parse(flowContext.text);
+    const toolResult = flowContext.tool_results?.find(r => r.name === 'choose_priority');
+    const result = JSON.parse(toolResult.result);
     flowContext.priority = result.answerId;
 ```
 
@@ -1378,7 +1383,7 @@ Always wrap completion calls in error handling:
 
 ```yaml
 - step: TRY
-  steps:
+  try:
     - step: HUB_COMPLETION
       instruction: '...'
   catch:

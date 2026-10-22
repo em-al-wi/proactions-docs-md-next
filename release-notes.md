@@ -10,8 +10,10 @@ All notable changes to ProActions are documented in this file.
 
 ### What's New in 1.3.0 (April, 2026)
 
-- 🎙️ **Voice Agents** — new `OPENAI_VOICE_AGENT` / `HUB_VOICE_AGENT` steps for full-duplex spoken conversations via the OpenAI Realtime API (WebRTC with automatic WebSocket fallback). Tool calling, skills, and dynamic tool discovery all work mid-session. `vad: { type: push_to_talk }` disables automatic turn detection in favor of an explicit hold-to-talk control in the voice bar.
+- 🎙️ **Voice Agents** — new `OPENAI_VOICE_AGENT` / `HUB_VOICE_AGENT` steps for full-duplex spoken conversations via the OpenAI Realtime API. Direct OpenAI sessions default to WebRTC with automatic WebSocket fallback; Hub sessions use its Realtime WebSocket relay. Tool calling, skills, and dynamic tool discovery all work mid-session. `vad: { type: push_to_talk }` disables automatic turn detection in favor of an explicit hold-to-talk control in the voice bar.
 - 🧰 **StoryEditor** — a curated, task-level tool provider for editorial agents: safe validated text edits (`searchAndReplaceText`, `appendParagraph`), semantic named fields (`getField`/`setField`), and visual marking (`markSegments`/`clearMarks`) — no custom scripts needed.
+- 📝 **Story Text Edits** — new `GET_STORY_BLOCKS` / `APPLY_TEXT_EDITS` steps and `response_format: text_edits` for whole-story LLM edits (proofreading, style, structure, fact-check notes). The model edits numbered blocks; links, captions, embedded objects and placeholders stay protected, and invalid edits change nothing. Preview, apply, or let the editor choose in a Flow Monitor checklist.
+- ✂️ **Cut to Length** — new `APPLY_TEXT_CUTS` step and `response_format: text_cuts` shorten a story by a known amount (typically the print overmatter). The model only proposes ranked cut candidates, with alternatives grouped; the engine measures what each one saves, detects the candidates that cannot be combined and preselects enough of them for the target. `mode: review` shows a cut panel in the Flow Monitor with a live character/line meter, inline alternatives and editor highlights that follow the checkboxes; `cutBy` (characters to remove) and `targetLength` are both accepted, and `GET_STORY_BLOCKS` can append each block's character count (`showLength: true`) so the model can size its cuts.
 - ⚙️ **Configurable Built-in Tools** — `builtinTools` class entries now accept a `config:` block, validated against each provider's declared options and resolved from templates once per session (`{{ imports.env.doc.headline }}`, etc.).
 - 🎯 **Conditional Tool & Skill Exposure (`when:`)** — gate `builtinTools`, `tools`, and `skills` entries with a template condition or boolean, evaluated once when the request or voice session is built. Gated-off tools are never advertised to the model and gated-off skills are never fetched.
 - 🔁 **Parallel skill loading & structured tool errors** — skills configured on a completion or voice step now load concurrently instead of sequentially; builtin tool failures are now reported through a dedicated error signal instead of string-matching content, so a tool result that happens to start with "Error:" is no longer misclassified as a failure.
@@ -71,7 +73,7 @@ All notable changes to ProActions are documented in this file.
 
 ## Version History
 
-- [1.3.0 - (unreleased)](#130---unreleased) - Voice Agents, StoryEditor, configurable/conditional built-in tools, native-typed expressions
+- [1.3.0 - (unreleased)](#130---unreleased) - Voice Agents, StoryEditor, Story Text Edits, Cut to Length, configurable/conditional built-in tools, native-typed expressions
 - [1.2.0 - April 23, 2026](#120---april-23-2026) - Flow Monitor, Agent Skills, Built-in AI Tools, MCP Integration, Block Drop
 - [1.1.0 - October 24, 2025](#110---october-24-2025) - Interactive Diff, Swing Integration, Enhanced Workflows
 - [1.0.12 - February 7, 2025](#1012---february-7-2025) - Slash Menu, ElevenLabs, Prime 8
@@ -138,6 +140,44 @@ builtinTools:
 ```
 
 `ContentTools` and `HighlightTools` remain the stable low-level primitives that StoryEditor is built on. See the [Built-in AI Tools Reference](./guides/configuration/builtin-ai-tools.md#storyeditor).
+
+**📝 Story Text Edits — Whole-Story LLM Editing**
+
+Two new steps plus a dedicated response format let a model edit an entire story — proofreading, spelling and style, structure, fact-check notes — without touching markup it cannot see.
+
+- **`GET_STORY_BLOCKS`** — reads the content root as numbered, role-labelled blocks (`[b3 text/p] The probe made <b>breif</b> contact…`). Blocks default to the nearest non-inline ancestor of text, so no DTD knowledge is required; `xpath`, `blockElements`, `ignoreElements` and `inlineElements` adapt the read per customer DTD.
+- **`response_format: text_edits`** — a strict JSON schema named `text_edits` for `OPENAI_COMPLETION`, `HUB_COMPLETION` and `AZURE_OPENAI_COMPLETION`. The model answers `{ "edits": [...] }`; the parsed payload lands in `flowContext.object`. No system prompt is injected, so the editorial rules stay in `behavior`.
+- **`APPLY_TEXT_EDITS`** — validates and applies the edits. `mode: preview` reports and highlights without writing (allowed on read-only documents), `mode: apply` writes once, and `mode: review` shows a Flow Monitor checklist where the editor unchecks what should not be applied. `selection` picks finding ids, `atomic` makes the batch all-or-nothing, `allowedOps` restricts the operations, `insertElements` widens the types inserts may use, and `forceWrite` bypasses the read-only check.
+- **Eleven operations** — `replace`, `rewrite`, `comment`, `insert_before`, `insert_after`, `delete`, `split`, `merge`, `move_before`, `move_after`, `retype`. Structural operations move existing nodes, so links, captions and embedded objects survive splitting and merging.
+- **Safety** — hidden markup (links, captions, embedded objects, placeholders, formatting with attributes) is preserved; a stale-block guard rejects edits whose block changed since the read; invalid edits change nothing and report an error code plus a hint written for the model; at most one write reaches the document. In Prime, preview and comment highlights are stored in the document until `CLEAR_TAGS` removes them.
+- **StoryEditor tools** — `readStoryBlocks`, `applyTextEdits`, `proposeTextEdits` and `applyProposedEdits` expose the same engine to agents, governed by `allowedOps`, `atomicEdits` (default `true`), `reviewEdits`, `insertElements`, `blockElements` and `ignoreElements`.
+- Prime XML writes keep the original prolog (XML declaration and DOCTYPE) unchanged.
+
+```yaml
+- step: GET_STORY_BLOCKS
+- step: HUB_COMPLETION
+  response_format: text_edits
+  behavior: |
+    You are a proofreader. Fix spelling and grammar only. Never change meaning or formatting.
+    Use op "rewrite" for blocks with several fixes and op "replace" for single words.
+    Return an empty edits array when the story is already correct.
+  instruction: "{{ flowContext.text }}"
+- step: APPLY_TEXT_EDITS
+  mode: review
+  allowedOps: [replace, rewrite, comment]
+```
+
+See the [Story Text Edits Guide](./guides/configuration/story-text-edits.md).
+
+**✂️ Cut to Length**
+
+A new step and response format shorten a story by a known amount — typically the print overmatter — with cuts the editor chooses. The model only proposes cuts; the length arithmetic is exact.
+
+- **`response_format: text_cuts`** — the model answers `{ "cuts": [...] }`: ranked candidates (`delete` a paragraph, `replace` a passage with a shorter one, `rewrite` a paragraph), a `priority` from 1 (cut first) to 3, and a shared `group` label for alternatives of the same passage.
+- **`APPLY_TEXT_CUTS`** — measures what every cut removes, links cuts that cannot be combined, and preselects cuts until the target (`cutBy` characters, or `targetLength`) is reached. `mode: review` opens a cut panel in the Flow Monitor: a live meter (characters, new length, estimated lines via `charsPerLine`), the cuts grouped by paragraph with one-click alternative swaps, editor highlights that follow the checkboxes, and optional *Ask for more cuts* rounds (`allowMore`, `previous`). `mode: preview` reports without writing; `mode: apply` writes the preselection or a `selection`. Every write is atomic.
+- **`GET_STORY_BLOCKS` `showLength: true`** — appends each block's character count to its line (`[b3 text/p · 412] …`); an optional `json` output returns the measured length.
+
+See the [Cut to Length Guide](./guides/configuration/text-cuts.md) for a ready-to-use section.
 
 **⚙️ Configurable Built-in Tools (`config:`)**
 
@@ -257,7 +297,7 @@ Both single-brace (`{actionContext.X}`) and double-brace (`{{ actionContext.X }}
 - Single-brace: the placeholder is left as a literal string in the output.
 - Double-brace: the expression returns `undefined` (or, in interpolated context, an empty string).
 
-The two are exact synonyms today, so the replacement is mechanical and safe.
+`actionContext` was removed; `flowContext` is the only supported name, so the replacement is mechanical and safe.
 
 ### 1.2.0 - April 23, 2026
 

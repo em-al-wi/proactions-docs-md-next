@@ -9,6 +9,14 @@ Creates a new section in the document using the specified template path, relativ
 ## At a glance
 - **Category** Browser
 
+## When to Use
+
+Use **INSERT_TEMPLATE_SECTION** to insert a section from a template before or after the currently selected item.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `templatePath` and `insertAfter`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

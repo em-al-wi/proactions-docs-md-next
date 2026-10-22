@@ -12,6 +12,14 @@ Executes a set of steps in a try block, and if an error occurs, executes catch s
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **TRY** to recover from expected failures with catch steps while allowing monitor aborts to propagate.
+
+## Data Flow
+
+Does not read flow context directly. Writes `error` for caught non-abort errors, including user-cancel errors, plus writes made by try and catch subflows.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

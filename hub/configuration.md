@@ -379,6 +379,54 @@ actions:
         message: 'Hub unavailable: {{ flowContext.error }}'
 ```
 
+### Hub Voice Agent (Realtime WebSocket)
+
+`HUB_VOICE_AGENT` does not use the HTTP `/v1` endpoints above. It opens a persistent WebSocket to the dedicated `/proactions/realtime` relay and therefore requires a separate service base URL and an OpenAI Realtime-capable target.
+
+```yaml
+# config.yaml on the Hub server
+targets:
+  - id: openai-realtime
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
+    options:
+      model: gpt-realtime-2
+```
+
+```yaml
+# /SysConfig/ProActions/services.ai-kit.services.yaml
+HUB_REALTIME:
+  # HUB_VOICE_AGENT appends /proactions/realtime.
+  endpoint: '{BASE_URL}/swing'
+  target: openai-realtime
+  model: gpt-realtime-2
+```
+
+```yaml
+- step: HUB_VOICE_AGENT
+  service: HUB_REALTIME
+  behavior: |
+    You are a helpful voice assistant.
+    Call end_session only after the user confirms they are done.
+```
+
+Before enabling this flow, verify that the deployed Hub version includes the Realtime relay. The Hub or its ingress must:
+
+- Expose `WSS /proactions/realtime`
+- Accept the CMS EDAPI bearer token and target metadata sent through `Sec-WebSocket-Protocol`
+- Preserve WebSocket upgrade and subprotocol headers through every reverse proxy
+- Use trusted TLS when the CMS is served over HTTPS
+- Allow long-lived connections for at least the configured voice-session duration
+- Permit outbound WSS access to `api.openai.com:443`
+
+The client must run in Swing or Prime with an available EDAPI token. Browser CSP and firewalls must permit WSS access to Hub. A Hub deployment that exposes only the endpoints listed under [AI-Link](./config/ai-link.md#available-endpoints) is not sufficient.
+
+AI-Kit verifies both connection phases automatically before microphone capture: the browser-to-Hub upgrade must select the `realtime` subprotocol, and Hub must return OpenAI's `session.created` event within 15 seconds. Failures identify whether to inspect the relay/proxy/authentication phase or the target/credential/egress phase.
+
+Verify the deployment by starting a Hub voice flow with browser developer tools open. The Network panel must show `/proactions/realtime?model=...` upgrading with status `101` and selecting the `realtime` subprotocol. Hub logs must show the authenticated CMS user, selected target, and successful upstream OpenAI connection. Interpret `404` as a missing relay, `401`/`403` as EDAPI authentication or subprotocol-forwarding failure, and an upstream connection error as target credentials or egress failure. Use the Hub release supplied by your administrator that explicitly includes this relay; AI-Kit does not define a standalone Hub version number.
+
+See [Voice Agents](../guides/configuration/voice-agents.md) for browser requirements, complete flow examples, VAD controls, tools, outputs, and troubleshooting.
+
 ### 4. Switching targets at the action level
 
 If you have multiple Hub targets configured (e.g., `openai` and `claude`), you can override the

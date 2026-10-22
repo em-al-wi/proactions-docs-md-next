@@ -13,6 +13,14 @@ Upload a video to YouTube via the Hub service. Supports video file, optional thu
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_YOUTUBE_UPLOAD** to upload a video, optional thumbnail, and metadata to YouTube through Hub.
+
+## Data Flow
+
+Reads resolved account and metadata values, `video` or fallback `file`, and optional `thumbnail`. Writes upload metadata to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

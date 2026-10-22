@@ -9,6 +9,14 @@ Executes an array of commands in the document preview panel (e.g. CREATE_PDF, CR
 ## At a glance
 - **Category** Browser
 
+## When to Use
+
+Use **DOCUMENT_PANEL_COMMAND** to execute preview-panel commands such as generating a table of contents or PDF.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `commands`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

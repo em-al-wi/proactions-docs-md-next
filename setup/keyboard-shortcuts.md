@@ -141,16 +141,18 @@ For contexts where editor shortcuts are not available (like the Swing dashboard)
 ```javascript
 (() => {
   window.SwingProActionsConfig = {
-    // Fallback keyboard shortcut
-    // Uses hotkeys-js syntax: https://github.com/jaywcjlove/hotkeys-js
-    openHotkey: 'cmd+k,ctrl+k',
+    core: {
+      // Fallback keyboard shortcut
+      // Uses hotkeys-js syntax: https://github.com/jaywcjlove/hotkeys-js
+      openHotkey: 'cmd+k,ctrl+k',
 
-    // ... other configuration ...
+      // ... other core configuration ...
+    },
   };
 })();
 ```
 
-The `openHotkey` property uses [hotkeys-js](https://github.com/jaywcjlove/hotkeys-js) syntax:
+The `openHotkey` property (under `core`) uses [hotkeys-js](https://github.com/jaywcjlove/hotkeys-js) syntax:
 
 **Key combinations:**
 
@@ -408,8 +410,10 @@ This allows for:
 // pro-actions-config.js
 (() => {
   window.SwingProActionsConfig = {
-    openHotkey: 'cmd+k,ctrl+k',
-    // ... other config ...
+    core: {
+      openHotkey: 'cmd+k,ctrl+k',
+      // ... other core config ...
+    },
   };
 })();
 ```

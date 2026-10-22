@@ -13,6 +13,14 @@ Check the status of a previously initiated YouTube OAuth authorization flow.
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_YOUTUBE_AUTH_STATUS** to check whether a Hub YouTube account has completed OAuth authorization.
+
+## Data Flow
+
+Reads resolved `account` values. Writes the authorization status to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

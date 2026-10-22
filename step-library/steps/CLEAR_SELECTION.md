@@ -12,6 +12,14 @@ Clears the current text selection and optionally repositions the cursor to the s
 - **Applications:** Swing
 - **Scope:** story, report, dwp, dashboard
 
+## When to Use
+
+Use **CLEAR_SELECTION** in Swing editor flows to clear a selection and place the caret at its start or end.
+
+## Data Flow
+
+Does not read or write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

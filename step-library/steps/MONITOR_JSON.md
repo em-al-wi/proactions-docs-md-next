@@ -12,6 +12,14 @@ Display JSON structured data in the Flow Monitor.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **MONITOR_JSON** to inspect or present arbitrary structured data as formatted JSON in the Flow Monitor.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `data` and `title`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

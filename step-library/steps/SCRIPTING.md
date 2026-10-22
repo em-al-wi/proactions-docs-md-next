@@ -54,6 +54,10 @@ Scripts have access to these variables:
 Uses JavaScript's Function constructor which has overhead. For high-frequency operations, consider using dedicated steps.
   
 
+## Data Flow
+
+Scripts receive the complete flow context and can return a replacement context or mutate context keys. `returnAs` writes one named key; template mode parses JSON as the next flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
@@ -227,7 +231,7 @@ tools:
 
 :::warning Don't mix template syntax with script syntax
 
-**Why:** Template mode uses `$\{\}` for interpolation and expects JSON output. Script mode uses pure JavaScript. Mixing them causes errors.
+**Why:** Template mode uses `${}` for interpolation and expects JSON output. Script mode uses pure JavaScript. Mixing them causes errors.
 
 **Solution:** Use `template` for building JSON with interpolation. Use `script` for JavaScript logic. Never use both in the same step.
 :::

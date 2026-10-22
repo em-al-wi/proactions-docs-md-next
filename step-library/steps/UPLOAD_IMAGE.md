@@ -13,6 +13,14 @@ Upload an image to EDAPI by providing an image object (url or blob). Returns the
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **UPLOAD_IMAGE** to create an EDAPI image object from an image URL or image input.
+
+## Data Flow
+
+Reads `image` or its configured input name. Writes created object metadata to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

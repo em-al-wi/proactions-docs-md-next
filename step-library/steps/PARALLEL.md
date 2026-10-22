@@ -12,6 +12,14 @@ Runs multiple step lists in parallel and merges their flow contexts upon complet
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **PARALLEL** to run independent subflows concurrently when their context writes can safely be merged.
+
+## Data Flow
+
+Starts each branch with a shallow copy of flow context, then merges completed branch contexts; conflicting keys use the last merged branch result.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

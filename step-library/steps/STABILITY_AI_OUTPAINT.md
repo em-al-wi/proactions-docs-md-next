@@ -14,6 +14,14 @@ Outpaint an image region using StabilityAI. Supports coordinates (left,right,up,
 - **Scope:** all
 - **Default Service:** STABILITY_AI
 
+## When to Use
+
+Use **STABILITY_AI_OUTPAINT** when an existing image needs its canvas extended on one or more sides.
+
+## Data Flow
+
+Reads `blob` and optional `imageName`. Writes the processed image to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

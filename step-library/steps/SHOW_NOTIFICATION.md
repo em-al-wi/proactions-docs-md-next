@@ -16,6 +16,14 @@ Shows a notification to the user with optional title and resolved message.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SHOW_NOTIFICATION** to show a non-blocking status, success, warning, or error message to the user.
+
+## Data Flow
+
+Reads flow context values referenced by the resolved `message`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

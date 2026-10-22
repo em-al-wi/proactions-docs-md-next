@@ -12,6 +12,14 @@ Reads content from the user clipboard. Prefers HTML content when available, fall
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **READ_CLIPBOARD** to bring the user clipboard HTML or plain text into a flow.
+
+## Data Flow
+
+Reads no flow context values. Writes clipboard content to `text` or its configured output name.
+
 ## Outputs
 | Type | Description | Optional |
 |---|---|:---:|

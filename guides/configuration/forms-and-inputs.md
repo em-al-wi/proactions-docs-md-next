@@ -711,7 +711,7 @@ Then define styles in your custom CSS:
       instruction: "{{ flowContext.currentText | safe }}"
 
     - step: FORM
-      modal:
+      formConfig:
         width: "900px"
         height: "700px"
       form:

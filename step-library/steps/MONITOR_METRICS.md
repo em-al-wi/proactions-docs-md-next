@@ -12,6 +12,14 @@ Display metrics in the Flow Monitor.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **MONITOR_METRICS** to display numeric or labeled evaluation metrics such as scores, counts, confidence, or token usage.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `data` and `title`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

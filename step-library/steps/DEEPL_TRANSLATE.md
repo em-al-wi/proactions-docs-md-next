@@ -14,6 +14,14 @@ Translate text using DeepL. Supports many optional DeepL parameters and returns 
 - **Scope:** all
 - **Default Service:** DEEPL
 
+## When to Use
+
+Use **DEEPL_TRANSLATE** to translate content with DeepL, especially when language-specific translation controls or terminology are needed.
+
+## Data Flow
+
+Reads resolved `instruction`, `target_lang`, and optional translation parameters. Writes translated text to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

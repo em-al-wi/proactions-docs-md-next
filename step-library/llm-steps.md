@@ -257,7 +257,8 @@ Full-duplex voice session routed through ProActions Hub (WebSocket only — a pr
 **Example:**
 ```yaml
 
-- step: OPENAI_VOICE_AGENT
+- step: HUB_VOICE_AGENT
+  service: HUB_REALTIME
   behavior: |
     You are a helpful editorial voice assistant.
 
@@ -519,6 +520,7 @@ Full-duplex voice session using the OpenAI Realtime API over WebRTC (default, wi
 ```yaml
 
 - step: OPENAI_VOICE_AGENT
+  service: OPENAI_REALTIME
   behavior: |
     You are a helpful editorial voice assistant.
 

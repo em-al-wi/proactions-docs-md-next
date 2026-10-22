@@ -13,6 +13,14 @@ Insert XML content at the given location. The content can be provided via the fl
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **INSERT_XML** to insert XML markup at the cursor or an XPath location.
+
+## Data Flow
+
+Reads `text` or a value resolved from `in`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

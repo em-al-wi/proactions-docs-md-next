@@ -12,6 +12,14 @@ Retrieves the full pure text content from the current document and sets it as ou
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **GET_PURE_TEXT** to capture complete plain-text document or report content before processing it in later steps.
+
+## Data Flow
+
+Reads no flow context values. Writes pure text to `text` or its configured text output name.
+
 ## Outputs
 | Type | Description | Optional |
 |---|---|:---:|

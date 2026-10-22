@@ -8,6 +8,7 @@ A voice agent step opens a live audio session instead of a single request/respon
 
 ```yaml
 - step: OPENAI_VOICE_AGENT
+  service: OPENAI_REALTIME
   behavior: |
     You are a helpful editorial voice assistant.
 
@@ -30,6 +31,90 @@ The step runs until the model calls `end_session`, the user clicks **End session
 - You want a transcript for downstream steps (summaries, logging, structured extraction)
 
 **When not to:** text-only interaction (use `OPENAI_COMPLETION`/`HUB_COMPLETION`), or transcribing audio without a live back-and-forth (use `OPENAI_TRANSCRIPTION`).
+
+## Before You Start
+
+Voice agents require all of the following:
+
+- A secure browser context (`https://`) with microphone permission
+- `MediaDevices.getUserMedia`, Web Audio API, and `AudioWorklet` support
+- The Flow Monitor enabled, because the pinned Voice Bar contains the session controls
+- A Realtime-capable OpenAI model, such as `gpt-realtime-2`
+- Network and Content Security Policy (CSP) rules that permit the connections described below
+
+For direct OpenAI sessions, the browser needs HTTPS and WSS access to `api.openai.com`; WebRTC media must also be permitted for the preferred transport. If WebRTC negotiation fails, the step falls back to WebSocket.
+
+For Hub sessions, Swing or Prime must provide an EDAPI token. The browser needs WSS access to the Hub relay, and Hub needs WSS egress to `api.openai.com:443`. Standalone clients cannot run `HUB_VOICE_AGENT` because they do not provide the required EDAPI token.
+
+## Configure a Service
+
+Use a dedicated service entry for voice agents. A voice endpoint is a **base URL**: the step appends `/v1/realtime/...` for direct OpenAI or `/proactions/realtime` for Hub. Do not reuse a completion service whose endpoint already ends in `/v1` or `/proactions`.
+
+### Hub (Recommended)
+
+Hub keeps the OpenAI API key on the server. Define a dedicated service in `/SysConfig/ProActions/services.ai-kit.services.yaml`:
+
+```yaml
+HUB_REALTIME:
+  # The step appends /proactions/realtime, producing
+  # {BASE_URL}/swing/proactions/realtime in a standard Swing deployment.
+  endpoint: '{BASE_URL}/swing'
+  target: openai-realtime
+  model: gpt-realtime-2
+```
+
+Then reference it from the step:
+
+```yaml
+- step: HUB_VOICE_AGENT
+  service: HUB_REALTIME
+  behavior: |
+    You are a helpful voice assistant.
+    Ask whether the user needs anything else before calling end_session.
+```
+
+The `target` must identify an OpenAI Realtime-capable target in Hub. Claude, Gemini, and ordinary chat-completion targets are not interchangeable with a Realtime target.
+
+The Hub administrator must configure the matching target and deploy a Hub version that provides the Realtime WebSocket relay:
+
+```yaml
+# ProActions Hub config.yaml
+targets:
+  - id: openai-realtime
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
+    options:
+      model: gpt-realtime-2
+```
+
+The deployment must expose `WSS /proactions/realtime`, authenticate the EDAPI bearer token sent in `Sec-WebSocket-Protocol`, preserve the requested WebSocket subprotocols, and forward the selected target to OpenAI Realtime. If a reverse proxy sits in front of Hub, configure WebSocket upgrades, trusted TLS, and a connection timeout long enough for `maxDurationSecs`. Confirm relay availability with your Hub administrator; a Hub installation that only exposes the HTTP endpoints under `/v1` does not support `HUB_VOICE_AGENT`.
+
+At session start, AI-Kit automatically verifies that the WebSocket upgrade selects the `realtime` subprotocol and that Hub creates the upstream OpenAI session within 15 seconds. It fails before opening the microphone when the relay route, EDAPI authentication, proxy subprotocol forwarding, target credentials, or Hub egress are not ready.
+
+### Direct OpenAI
+
+Direct mode loads the long-lived OpenAI API key into browser-delivered ProActions configuration so it can request a short-lived session key. The audio session uses the short-lived key, but this does **not** prevent a browser user from inspecting the configured long-lived key. Prefer Hub for production use.
+
+```yaml
+# /SysConfig/ProActions/services.ai-kit.services.yaml
+OPENAI_REALTIME:
+  apiKey: 'sk-...'
+  # Base URL only: do not append /v1.
+  endpoint: 'https://api.openai.com'
+  model: gpt-realtime-2
+```
+
+```yaml
+- step: OPENAI_VOICE_AGENT
+  service: OPENAI_REALTIME
+  behavior: |
+    You are a helpful voice assistant.
+    Ask whether the user needs anything else before calling end_session.
+```
+
+`OPENAI_VOICE_AGENT` defaults to a service named `OPENAI_COMPLETION` for compatibility. Only rely on that default when the service already uses the base endpoint `https://api.openai.com` and a Realtime model. A typical completion endpoint such as `https://api.openai.com/v1` is not valid for this step.
+
+Voice steps resolve `behavior` from the step itself and do not inherit `defaultBehavior` from the service. Configure `behavior` explicitly unless a loaded skill supplies all required instructions, including when to call `end_session`.
 
 ## Transport: WebRTC vs WebSocket
 
@@ -114,8 +199,8 @@ tune. `bargeIn` applies in every mode (see below).
   interrupt affordance.
 - **`speech`** — the agent keeps talking while you hold, and is cut off the moment
   your voice is actually detected on the microphone. Resting a finger on the control
-  (or an accidental grab) never interrupts. A quiet hold still interrupts at release,
-  when the captured turn is sent — a valid turn is always answered.
+  (or an accidental grab) never interrupts. When microphone analysis is available,
+  a hold with no detected speech is discarded instead of being transcribed.
 - **`off`** — never interrupt. Presses while the agent is responding are refused:
   the mic stays closed and the release does nothing. Wait for the
   *Ready — hold the button to talk* label, then press. Use this when the agent's
@@ -184,7 +269,6 @@ Voice agents resolve `tools`, `builtinTools`, `skills`, `when:` conditions, and 
     - editorial-style
   builtinTools:
     - class: StoryEditor
-      when: '{{ not client.isReadonly() }}'
       config:
         fields:
           headline: '/doc/story/grouphead/headline/p'
@@ -220,7 +304,7 @@ Your `behavior` decides when the conversation is complete. The model can pass a 
     Complete the requested editorial task, then call end_session with a concise summary.
 ```
 
-The summary is appended to the Step's `text` output. If the model passes a `result` object, it is written to `flowContext.object`:
+The summary is appended to the Step's `text` output. If the model passes a `result` object, it is written to `flowContext.object` by default. An `outputs` mapping changes the destination key:
 
 ```yaml
 - step: OPENAI_VOICE_AGENT
@@ -243,6 +327,8 @@ The user can end the session immediately with **End session** in the pinned voic
 | `messages` | Raw transcript array of `{ role, content }` turns, for downstream steps (only written when included in `outputs:`) |
 | `usage` | Token usage accumulated across completed responses (only written when included in `outputs:`) |
 
+`text` is always written and defaults to `flowContext.text`. `object` is written only when `end_session` supplies a result. `messages` and `usage` are opt-in and are written only when included in `outputs`. Every configured `name` replaces the default flow-context key.
+
 ```yaml
 - step: OPENAI_VOICE_AGENT
   behavior: '...'
@@ -263,53 +349,106 @@ The user can end the session immediately with **End session** in the pinned voic
     {{ flowContext.text }}
 ```
 
-## Service Configuration
+## Complete Hub Example
 
-`OPENAI_VOICE_AGENT` defaults to the `OPENAI_COMPLETION` service (reuses its `apiKey`/`endpoint`); `HUB_VOICE_AGENT` defaults to `HUB`. Override per step with `service:`:
-
-```yaml
-- step: OPENAI_VOICE_AGENT
-  service: OPENAI_REALTIME   # a dedicated service entry, if you keep one separate from OPENAI_COMPLETION
-```
-
-See the [Service Configuration guide](./service-configuration.md) for defining service entries.
-
-## Full Example
+Add the service to `/SysConfig/ProActions/services.ai-kit.services.yaml`:
 
 ```yaml
-- step: OPENAI_VOICE_AGENT
-  monitorLabel: Voice Assistant
-  service: OPENAI_REALTIME
+HUB_REALTIME:
+  endpoint: '{BASE_URL}/swing'
+  target: openai-realtime
   model: gpt-realtime-2
-  voice: marin
-  behavior: |
-    You are a helpful editorial voice assistant.
-
-    Read the story before answering questions about it or editing it,
-    so your search strings match the article exactly.
-
-    After completing a task, ask "Is there anything else I can help you
-    with?" in the language of the conversation. Keep the conversation
-    going until the user explicitly says they are done.
-
-    Only call end_session after: (1) you have spoken all results verbally,
-    (2) the user confirms they are done.
-  builtinTools:
-    - class: StoryEditor
-      when: '{{ not client.isReadonly() }}'
-      config:
-        fields:
-          headline: '/doc/story/grouphead/headline/p'
-          summary: '/doc/story/summary/p'
-  maxDurationSecs: 1200
-  showToolCalls: true
-  outputs:
-    - type: text
-      name: text
-    - type: object
-      name: object
 ```
 
-## Platform Requirements
+Create `/SysConfig/ProActions/sections/voice-assistant.ai-kit.section.yaml`:
 
-Voice agents require a browser with Web Audio API and `MediaDevices.getUserMedia` support, and network connectivity to `api.openai.com` (or your Hub deployment for `HUB_VOICE_AGENT`). See the [`OPENAI_VOICE_AGENT`](../../step-library/steps/OPENAI_VOICE_AGENT.md) and [`HUB_VOICE_AGENT`](../../step-library/steps/HUB_VOICE_AGENT.md) step reference for the complete config option list.
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/em-al-wi/proactions-schema/main/schema/partial-section.schema.json
+section: Voice Tools
+context: story
+monitor:
+  # Voice controls are pinned inside the Flow Monitor.
+  enabled: true
+actions:
+  - title: Voice Assistant
+    flow:
+      - step: HUB_VOICE_AGENT
+        monitorLabel: Voice Assistant
+        service: HUB_REALTIME
+        model: gpt-realtime-2
+        voice: marin
+        behavior: |
+          You are a helpful editorial voice assistant.
+
+          Read the story before answering questions about it or editing it.
+          After completing a task, ask whether the user needs anything else.
+          Keep the conversation open until the user explicitly says they are done.
+          Speak all results before calling end_session with a concise summary.
+        builtinTools:
+          - class: StoryEditor
+            config:
+              fields:
+                headline: '/doc/story/grouphead/headline/p'
+                summary: '/doc/story/summary/p'
+        maxDurationSecs: 1200
+        showToolCalls: true
+        outputs:
+          - type: messages
+            name: voiceConversation
+          - type: usage
+            name: voiceUsage
+
+    onError:
+      - step: SHOW_NOTIFICATION
+        notificationType: error
+        message: 'Voice assistant failed: {{ flowContext.error }}'
+```
+
+Include the section from `/SysConfig/pro-actions.ai-kit.yaml`:
+
+```yaml
+AI_KIT:
+  SERVICES:
+    !include /SysConfig/ProActions/services.ai-kit.services.yaml
+  SECTIONS:
+    - !include /SysConfig/ProActions/sections/voice-assistant.ai-kit.section.yaml
+```
+
+To use direct OpenAI instead, define `OPENAI_REALTIME` as shown above and replace the step with:
+
+```yaml
+- step: OPENAI_VOICE_AGENT
+  service: OPENAI_REALTIME
+  # WebRTC is the default; use transport: websocket only when explicitly required.
+```
+
+## Deployment Checklist
+
+- The Voice Agents guide appears under **Guides > Configuration** and the action appears in the expected CMS context.
+- The browser is in a secure context and microphone permission is granted.
+- The Flow Monitor is enabled and shows the pinned Voice Bar.
+- The configured endpoint is a base URL and does not already end in `/v1` or `/proactions`.
+- The configured model and Hub target support OpenAI Realtime.
+- Direct mode can reach OpenAI over HTTPS/WSS and WebRTC; Hub mode can reach its WebSocket relay.
+- Hub mode runs in Swing or Prime with an available EDAPI token.
+- Reverse proxies preserve WebSocket upgrades and subprotocols, and CSP `connect-src` permits the required WSS origin.
+- The behavior tells the model when to call `end_session`.
+- `StoryEditor` remains available on read-only documents so the agent can read them; its write tools return `document_read_only` without changing content.
+
+## Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| Request URL contains `/v1/v1/realtime` | Use an OpenAI base endpoint without `/v1`, such as `https://api.openai.com`. |
+| Hub URL contains `/proactions/proactions/realtime` | Use the Hub base endpoint before `/proactions`; in a standard Swing deployment this is `{BASE_URL}/swing`. |
+| Hub returns 404 or the WebSocket never upgrades | The deployed Hub or reverse proxy does not expose `/proactions/realtime`; contact the Hub administrator. |
+| Hub authentication fails | Run in Swing/Prime and confirm an EDAPI token is available and WebSocket subprotocol headers are preserved. |
+| Direct session uses the wrong model | Set `model: gpt-realtime-2` in the dedicated service or step. |
+| Microphone access fails | Use HTTPS, grant site permission, verify an input device exists, and check browser policy. |
+| WebRTC falls back to WebSocket | Check UDP/media negotiation, firewall policy, and browser diagnostics. The fallback is expected when WebRTC cannot connect. |
+| Voice Bar does not appear | Enable the Flow Monitor for the action/section. |
+| Agent never ends the session | Add explicit `end_session` conditions to `behavior`, or use **End session** in the Voice Bar. |
+
+To verify a Hub deployment, run the example flow with browser developer tools open. The Network panel must show a WebSocket request ending in `/proactions/realtime?model=...` with status `101`, and the selected subprotocol must be `realtime`. Hub logs must show the authenticated CMS user, selected Realtime target, and an upstream connection to OpenAI. A `404` means the relay is unavailable; `401`/`403` indicates EDAPI authentication or subprotocol forwarding; an upstream connection error indicates target credentials or Hub egress. Use the Hub release supplied by your administrator that explicitly includes this relay; the AI-Kit repository does not define a standalone Hub version number.
+
+See [Service Configuration](./service-configuration.md), [AI Integration](./ai-integration.md), [`OPENAI_VOICE_AGENT`](../../step-library/steps/OPENAI_VOICE_AGENT.md), and [`HUB_VOICE_AGENT`](../../step-library/steps/HUB_VOICE_AGENT.md) for related configuration details.

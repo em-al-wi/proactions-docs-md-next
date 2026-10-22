@@ -12,6 +12,14 @@ Display key-value structured data in the Flow Monitor.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **MONITOR_KEYVALUE** to display a compact object summary as labeled key-value pairs during a monitored flow.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `data` and `title`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -12,6 +12,14 @@ Retrieves zones and their linked documents from a DWP or Report.
 - **Applications:** all
 - **Scope:** dwp, report
 
+## When to Use
+
+Use **GET_ZONES** to retrieve zones and optional linked documents from the active DWP or report for downstream processing.
+
+## Data Flow
+
+Reads no flow context values. Writes the retrieved zones to `list` (or its configured output name) and optionally to a configured `object` output.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

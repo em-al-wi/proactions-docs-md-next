@@ -14,6 +14,14 @@ Search and replace regions or objects within an image using StabilityAI. Provide
 - **Scope:** all
 - **Default Service:** STABILITY_AI
 
+## When to Use
+
+Use **STABILITY_AI_SEARCH_AND_REPLACE** when a described object or region in an image must be located and replaced.
+
+## Data Flow
+
+Reads `blob`, optional `imageName`, and resolved `prompt` and `search_prompt`. Writes the processed image to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

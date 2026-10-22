@@ -8,7 +8,7 @@ Display a confirmation dialog in the Flow Monitor. Pauses workflow until user re
 
 ## At a glance
 - **Category** UI
-- **Version:** 1.2.0
+- **Version:** 1.3.0
 - **Applications:** all
 - **Scope:** all
 
@@ -30,13 +30,17 @@ Use **MONITOR_CONFIRM** when you need Yes/No confirmation before proceeding.
 - You just need "Continue" button → use **MONITOR_STATUS** with appropriate message
   
 
+## Data Flow
+
+Reads flow context values referenced by resolved `message` and `content`. Writes the boolean result to `confirmed` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
 | `message` | The confirmation message to display. Supports variable resolution with \{\{variable\}\}. | None |true| true |None|None|
 | `content` | Optional rich content to display (e.g., AI-generated text for review). Supports markdown. | None |false| true |None|None|
-| `confirm` | Label for the confirm button (default: "Confirm"). Used in Yes/No mode. | Confirm |false| false |None|None|
-| `cancel` | Label for the cancel button (default: "Cancel"). Used in Yes/No mode. | Cancel |false| false |None|None|
+| `confirm` | Label for the confirm button. Defaults to the localized "Confirm". | None |false| false |None|None|
+| `cancel` | Label for the cancel button. Defaults to the localized "Cancel". | None |false| false |None|None|
 | `confirmType` | Visual style of the confirm button. | primary |false| false |None|None|
 | `timeout` | Optional timeout in seconds. Auto-cancels if user does not respond. | None |false| false |None|None|
 

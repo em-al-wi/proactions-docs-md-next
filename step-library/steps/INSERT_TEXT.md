@@ -13,6 +13,14 @@ Insert text at the given location (cursor, xpath or report). If the step reads t
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **INSERT_TEXT** to insert generated or supplied plain text at the cursor or an XPath location.
+
+## Data Flow
+
+Reads `text` or a value resolved from `in`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

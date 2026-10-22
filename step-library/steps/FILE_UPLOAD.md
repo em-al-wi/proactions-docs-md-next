@@ -16,6 +16,14 @@ Opens a file upload dialog (modal) and stores selected file(s) into the flow con
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **FILE_UPLOAD** when a flow needs a user-selected browser file, optionally also materialized as text or binary data.
+
+## Data Flow
+
+Reads no flow context values directly. Writes `file` by default or configured file, text, and arrayBuffer output names.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

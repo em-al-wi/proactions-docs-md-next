@@ -18,6 +18,14 @@ Documentation partly inherited from `OPENAI_IMAGE_GENERATION`.
 - **Scope:** all
 - **Default Service:** AZURE_OPENAI_IMAGE_GENERATION
 
+## When to Use
+
+Use **AZURE_OPENAI_IMAGE_GENERATION** when a flow prompt must generate images through Azure OpenAI.
+
+## Data Flow
+
+Reads resolved `instruction` or `text`. Writes generated items to `outputKey` (default `imageList`) and optionally writes generation metadata to a configured `object` output.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

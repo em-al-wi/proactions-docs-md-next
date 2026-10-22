@@ -13,6 +13,14 @@ Parses JSON content from the text input and stores the resulting object in the f
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **PARSE_JSON** after a service returns JSON text and later steps need a structured object.
+
+## Data Flow
+
+Reads a value resolved from `in` or `text`. Writes the parsed value to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

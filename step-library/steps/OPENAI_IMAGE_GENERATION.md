@@ -14,6 +14,14 @@ Generate images using OpenAI image models (DALL·E and GPT-Image-1). Supports mo
 - **Scope:** all
 - **Default Service:** OPENAI_IMAGE_GENERATION
 
+## When to Use
+
+Use **OPENAI_IMAGE_GENERATION** when a prompt from the flow must generate one or more images with an OpenAI image model.
+
+## Data Flow
+
+Reads resolved `instruction` or `text`. Writes generated items to `outputKey` (default `imageList`) and optionally writes generation metadata to a configured `object` output.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

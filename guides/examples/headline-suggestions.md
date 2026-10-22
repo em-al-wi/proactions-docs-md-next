@@ -147,7 +147,7 @@ This automatically:
 
 - Displays all items from the previous step's list output
 - Allows the user to select one option
-- Stores the selected text in `{selectedText}`
+- Stores the selected text in `flowContext.text`
 
 ### Step 3: Replace Headline
 
@@ -159,7 +159,7 @@ The REPLACE_TEXT step updates the document:
   xpath: "/doc/story/grouphead/headline/p"
 ```
 
-This replaces the content at the specified XPath with `{selectedText}` from the previous step.
+This replaces the content at the specified XPath with the value from `flowContext.text` (REPLACE_TEXT's default text input) set by the previous step.
 
 ## Customization
 

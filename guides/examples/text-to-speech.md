@@ -134,7 +134,7 @@ This step:
 - Uses the `text` variable from the previous SET step
 - Calls the configured TTS service (e.g., OpenAI TTS)
 - Returns binary audio data
-- Stores the result in `flowContext.data` by default
+- Stores the result in `flowContext.blob` by default
 
 ### Step 3: Upload to Méthode
 

@@ -13,6 +13,14 @@ Retrieves text content from the document or a specific location and sets it as o
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **GET_TEXT_CONTENT** to read text from the full document, current paragraph, report container, or an XPath target.
+
+## Data Flow
+
+Reads no flow context values. Writes retrieved text to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -12,6 +12,14 @@ Upload content to EDAPI by providing a blob or specifying parameters (filename, 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **UPLOAD** to upload arbitrary binary content to EDAPI with explicit or derived creation options.
+
+## Data Flow
+
+Reads `blob`, optional runtime options, and resolved filename or base type values. Writes created object metadata to `object` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

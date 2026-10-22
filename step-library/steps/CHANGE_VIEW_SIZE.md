@@ -12,6 +12,14 @@ Requests a change of the view port size. Useful to resize the command palette vi
 - **Applications:** Prime 8
 - **Scope:** all
 
+## When to Use
+
+Use **CHANGE_VIEW_SIZE** in Prime 8 to request a command-palette viewport resize.
+
+## Data Flow
+
+Reads resolved width and height values from flow context or config. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -13,6 +13,14 @@ Generic REST step. Builds a Request from the given configuration (url, method, h
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **REST** to call an arbitrary HTTP endpoint when no specialized platform step exists.
+
+## Data Flow
+
+Reads resolved values in URL, headers, parameters, body, and form data. For a body-reading response, use one configured output; otherwise response text is written to `text` by default.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

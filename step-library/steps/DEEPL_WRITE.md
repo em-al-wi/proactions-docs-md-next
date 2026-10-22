@@ -14,6 +14,14 @@ Rephrase/write text using DeepL Write endpoint. Returns the rephrased text in th
 - **Scope:** all
 - **Default Service:** DEEPL_WRITE
 
+## When to Use
+
+Use **DEEPL_WRITE** to rephrase content, improve grammar, or adjust tone and style without a general LLM workflow.
+
+## Data Flow
+
+Reads resolved `instruction` and optional writing parameters. Writes rewritten text to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

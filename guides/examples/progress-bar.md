@@ -97,7 +97,6 @@ Display the progress indicator:
 
 - `bottom` - Bottom of the screen (default)
 - `top` - Top of the screen
-- `center` - Center of the screen
 
 ### Step 3: Update Progress in Loop
 

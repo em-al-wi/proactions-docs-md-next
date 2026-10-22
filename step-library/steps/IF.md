@@ -39,12 +39,16 @@ Use **IF** when you need to execute different steps based on a true/false condit
 
 **Required Context:**
 - Condition can reference any flowContext variables
-- Template syntax \{\{ \}\} evaluates to JavaScript expressions
+- Template syntax \{\{ \}\} is Nunjucks, not JavaScript: use and / or / not and the built-in filters. JavaScript-only syntax (||, &&, !) raises no error but resolves to false, so the "then" branch is silently skipped
+
+## Data Flow
+
+Reads flow context values referenced by `condition` or legacy `test`. Does not write directly; writes made by the selected `then` or `else` subflow are preserved.
 
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
-| `condition` | The condition to evaluate. Can be a template expression with \{\{ \}\} syntax. | None |false| true |None|None|
+| `condition` | The condition to evaluate, e.g. "\{\{ flowContext.count > 0 \}\}". Templates are Nunjucks: use and / or / not (NOT && / \|\| / !, which fail silently and make the condition false). Compare numbers directly, e.g. "\{\{ flowContext.count > 0 \}\}"; the \| length filter works on arrays and strings only, never on a number. | None |false| true |None|None|
 | `test` | Legacy alternative to condition. The condition to evaluate using JavaScript syntax. | None |false| false |None|None|
 | `then` | Steps to execute if the condition is true | None |false| false |None|None|
 | `else` | Steps to execute if the condition is false | None |false| false |None|None|
@@ -59,7 +63,7 @@ Use **IF** when you need to execute different steps based on a true/false condit
 ### Basic conditional execution
 ```yaml
  - step: IF
-   condition: "{{ userInput === 'yes' }}"
+   condition: "{{ flowContext.userInput == 'yes' }}"
    then:
      - step: SHOW_NOTIFICATION
        message: "Proceeding..."

@@ -12,6 +12,14 @@ Pause execution for a given delay (ms). Useful for pacing flows or waiting for e
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SLEEP** to pause a flow for a fixed number of milliseconds while waiting for external state.
+
+## Data Flow
+
+Does not read or write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

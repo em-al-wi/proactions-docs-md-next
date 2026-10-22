@@ -16,6 +16,14 @@ Shows a simple prompt to the user and stores the entered text into the default t
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **PROMPT** when a flow needs one short free-text response from the user.
+
+## Data Flow
+
+Reads flow context values referenced by resolved `promptText`. Writes entered text to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -72,6 +72,26 @@ HUB_CLAUDE:
 
 ProActions Hub supports many providers, but the available `targets` are managed in the ProActions Hub configuration. Please contact your ProActions Hub administrator to find out which targets have been set up.
 
+### Voice Agent Services
+
+Voice agents use persistent Realtime connections and require dedicated base endpoints. Do not point them at the completion service URLs shown above: `HUB_VOICE_AGENT` appends `/proactions/realtime`, while `OPENAI_VOICE_AGENT` appends `/v1/realtime/...`.
+
+```yaml
+# Recommended: OpenAI Realtime through Hub
+HUB_REALTIME:
+  endpoint: '{BASE_URL}/swing' # produces /swing/proactions/realtime
+  target: openai-realtime
+  model: gpt-realtime-2
+
+# Direct OpenAI (not recommended because the API key reaches the browser)
+OPENAI_REALTIME:
+  endpoint: 'https://api.openai.com' # no trailing /v1
+  apiKey: 'sk-...'
+  model: gpt-realtime-2
+```
+
+`HUB_REALTIME.target` must be backed by an OpenAI Realtime-capable Hub target, and the Hub deployment must provide the `/proactions/realtime` WebSocket relay. Voice steps do not inherit `defaultBehavior`; configure `behavior` on each voice step. See [Voice Agents](./voice-agents.md) for the complete Hub, browser, network, and flow setup.
+
 ## DeepL Translation
 
 DeepL provides high-quality translation services.
@@ -192,6 +212,8 @@ OPENAI:
   apiKey: "sk-..."  # Exposed API key - not secure
   endpoint: "https://api.openai.com/v1"
 ```
+
+That `/v1` endpoint is for completion-style OpenAI steps. Direct voice agents require a separate base endpoint without `/v1`; see [Voice Agent Services](#voice-agent-services).
 
 ### Why Use Hub Instead?
 

@@ -12,6 +12,14 @@ Breaks out of the current loop (e.g., WHILE or FOR) based on the given condition
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **BREAK** inside a FOR or WHILE body to stop the enclosing loop once a condition is met.
+
+## Data Flow
+
+Reads flow context values referenced by the optional condition. Does not write flow context; throws `LoopBreakError` to exit the enclosing loop.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

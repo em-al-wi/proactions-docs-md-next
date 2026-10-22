@@ -13,6 +13,14 @@ Extract textual content from a URL using the ProActions-Hub extraction tool. The
 - **Scope:** all
 - **Default Service:** HUB
 
+## When to Use
+
+Use **HUB_CONTENT_EXTRACTION** to extract structured textual content from a web URL through ProActions Hub.
+
+## Data Flow
+
+Reads `text` or its configured input name as the URL. Writes the extraction result to `object` or its configured output name.
+
 ## Inputs
 | Type | Description | Default | Required | Resolved |
 |---|---|:---:|:---:|:---:|

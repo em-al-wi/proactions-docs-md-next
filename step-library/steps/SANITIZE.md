@@ -12,6 +12,14 @@ Sanitizes text input. Can strip markdown code blocks, normalize Unicode characte
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SANITIZE** before parsing, comparing, or inserting text that may contain code fences, typographic Unicode, or malformed XML.
+
+## Data Flow
+
+Reads `text` or its configured input name. Writes sanitized text to `text` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

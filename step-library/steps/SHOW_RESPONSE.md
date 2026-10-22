@@ -16,6 +16,14 @@ Shows a response to the user in a modal. Can run inline steps before showing and
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SHOW_RESPONSE** to pause a flow and present plain text, HTML, or Markdown to the user in a modal.
+
+## Data Flow
+
+Reads `text`; configured inline steps can read and write additional context before the modal is shown. Does not directly write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

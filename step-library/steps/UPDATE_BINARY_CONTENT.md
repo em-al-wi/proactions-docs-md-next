@@ -13,6 +13,14 @@ Update binary content of an existing object in EDAPI using the provided blob. Re
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **UPDATE_BINARY_CONTENT** to replace the binary content of an existing EDAPI object.
+
+## Data Flow
+
+Reads the object ID from `text` and binary data from `blob` or configured input names. Writes updated object metadata to `object` or its configured output name.
+
 ## Inputs
 | Type | Description | Default | Required | Resolved |
 |---|---|:---:|:---:|:---:|

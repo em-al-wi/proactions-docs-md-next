@@ -1113,10 +1113,16 @@ Set via the `config:` block on the `builtinTools` class entry:
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| `bodyXpath` | `string` | `"/doc/story"` | XPath of the content root that searchAndReplaceText reads and writes |
+| `bodyXpath` | `string` | `"/doc/story"` | Content root read and written by searchAndReplaceText and the story-block tools |
 | `appendXpath` | `string` | `"/doc/story/text"` | XPath of the element appendParagraph inserts new paragraphs into |
 | `allowedElements` | `array` | `["p","h2","h3","ul","li","b","i","u"]` | XML elements allowed in searchAndReplaceText replacement content |
-| `inlineElements` | `array` | `["b","i","u"]` | Inline formatting elements allowed in appendParagraph text |
+| `inlineElements` | `array` | `["b","i","u"]` | Inline formatting elements allowed in appendParagraph text and visible/editable in story blocks |
+| `blockElements` | `array` | `[]` | Elements that form editable blocks; empty = automatic detection |
+| `ignoreElements` | `array` | `[]` | Elements whose content is never shown or edited |
+| `insertElements` | `array` | `[]` | Extra element names applyTextEdits may create as new blocks or retype to, beyond the types already used under the same parent |
+| `reviewEdits` | `boolean` | `false` | Every write by applyTextEdits/applyProposedEdits first shows the Flow Monitor checklist; the user decides what is applied |
+| `atomicEdits` | `boolean` | `true` | applyTextEdits applies all edits or none, so the agent can fix failures and resend the batch |
+| `allowedOps` | `array` | `["replace","rewrite","comment","insert_before","insert_after","delete","split","merge","move_before","move_after","retype"]` | Edit operations applyTextEdits/proposeTextEdits accept; others fail with op_not_allowed |
 | `fields` | `object` | — | Map of semantic field names to xpaths (e.g. headline: /doc/story/grouphead/headline/p). Generates the getField/setField tools with the field names as an enum; both tools are dropped when no fields are configured. |
 | `markTag` | `string` | `"mark"` | Tag name used by markSegments/clearMarks |
 
@@ -1280,6 +1286,75 @@ Remove all highlight marks previously added with markSegments.
 
 **Parameters:** None
 
+
+
+
+#### `readStoryBlocks`
+
+Read the story as numbered blocks "[b1 headline/p] …" (id, then the element role). Inline formatting tags shown in a block (e.g. \<b>, \<i>) are real; everything else is protected. Use before applyTextEdits/proposeTextEdits and copy "find" strings exactly from here.
+
+
+**Parameters:** None
+
+
+
+
+#### `applyTextEdits`
+
+Edit the story safely in one batch, using ids from readStoryBlocks. Text: replace text/inline formatting inside a block, or rewrite a whole block (only the differences are applied). Structure: insert, delete, split, merge, move, or retype blocks. These move existing content, so links, captions, and embedded objects are preserved. Comment: flag text for the editor without changing it. With atomic batches (default) either all edits apply or none, and the result explains each failure with a hint; fix them and resend.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `edits` | `array` | Yes | Edits to apply, in order |
+
+
+
+
+**Returns:** JSON TextEditReport: \{ mode, applied, commented, unchanged, rejected, failed, results[], findings[] \}
+
+
+
+#### `proposeTextEdits`
+
+Suggest edits without changing the story: the findings are highlighted in the editor and returned as a numbered list (f1, f2, …). Present them to the user, then call applyProposedEdits with the ids the user accepts. Fix failed edits and propose them again.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `edits` | `array` | Yes | Edits to propose, in order |
+
+
+
+
+**Returns:** JSON: \{ proposalId, findings: [\{ id, label, block, reason \}], failed: [\{ index, block, error, hint \}] \}
+
+
+
+#### `applyProposedEdits`
+
+Apply the findings the user accepted from a proposeTextEdits proposal. Pass an empty array to discard the proposal and clear its highlights.
+
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+
+| `proposalId` | `string` | Yes | Id returned by proposeTextEdits |
+
+| `findingIds` | `array` | No | Finding ids to apply (e.g. ["f1","f3"]); omit to apply all |
+
+
+
+
+**Returns:** JSON TextEditReport: \{ mode, applied, commented, unchanged, rejected, failed, results[], findings[] \}
 
 
 

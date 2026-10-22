@@ -13,6 +13,14 @@ Set a field value in the object panel using a selector or XPath. Supports tagsin
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SET_METADATA** to populate an object-panel field or tagsinput control from values produced by a flow.
+
+## Data Flow
+
+Reads text and list inputs from flow context. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

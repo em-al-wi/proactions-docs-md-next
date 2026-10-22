@@ -12,6 +12,14 @@ Saves the current document. Optionally closes the document after saving.
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SAVE_DOCUMENT** to persist the active document, optionally closing it when a resolved condition is true.
+
+## Data Flow
+
+Reads flow context values referenced by the resolved `close` option. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -13,6 +13,14 @@ Retrieves information about the currently selected content object and sets it as
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SELECTED_OBJECT** to obtain the currently selected editor object ID or full metadata before acting on it.
+
+## Data Flow
+
+Reads no flow context values. Writes the selected ID to `text` by default or writes configured text and object output names.
+
 ## Outputs
 | Type | Description | Optional |
 |---|---|:---:|

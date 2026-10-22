@@ -499,7 +499,7 @@ Available everywhere with single braces:
   instruction: "Improve: {selectedText}"   # Selected text
 
 - step: HUB_COMPLETION
-  instruction: "User: {userName}"          # Current user
+  instruction: "User: {{ client.getUserName() }}" # Current user
 ```
 
 ### Custom Variables
@@ -509,7 +509,7 @@ Set and use with double braces:
 ```yaml
 - step: SET
   myVariable: "Custom value"
-  anotherVar: "{userName}'s workspace"
+  anotherVar: "{{ client.getUserName() }}'s workspace"
 
 - step: SHOW_NOTIFICATION
   message: "Value: {{ flowContext.myVariable }}"

@@ -12,6 +12,14 @@ Evaluates a switch value and executes the steps for the matching case. Supports 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **SWITCH** to route one resolved value to one of several named cases or a default branch.
+
+## Data Flow
+
+Reads flow context values referenced by `condition`, legacy `switch`, and legacy case tests. Does not write directly; writes from the selected case subflow are preserved.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

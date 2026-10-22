@@ -12,6 +12,14 @@ Routes flow execution to platform-specific branches (`swing`, `prime`, `standalo
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **PLATFORM** to select different implementation steps for Swing, Prime, standalone, or a default client branch.
+
+## Data Flow
+
+Does not read flow context directly. Writes from the selected platform subflow are returned in flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

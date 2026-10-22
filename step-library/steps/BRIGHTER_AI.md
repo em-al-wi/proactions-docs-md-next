@@ -14,6 +14,14 @@ Upload an image to BrighterAI, poll for processing completion and download the a
 - **Scope:** all
 - **Default Service:** BRIGHTER_AI
 
+## When to Use
+
+Use **BRIGHTER_AI** when an input image must be anonymized before further processing or publication.
+
+## Data Flow
+
+Reads `blob` and optional `imageName`. Writes the anonymized image to `blob` or its configured output name.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

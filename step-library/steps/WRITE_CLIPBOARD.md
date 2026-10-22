@@ -12,6 +12,14 @@ Writes text to the user clipboard. Reads the content from the configured input (
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **WRITE_CLIPBOARD** to copy text produced by a flow to the user clipboard.
+
+## Data Flow
+
+Reads `text` or its configured input name, falling back to resolved `text` config. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

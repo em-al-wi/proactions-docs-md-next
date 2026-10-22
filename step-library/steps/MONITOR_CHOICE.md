@@ -29,6 +29,10 @@ Use **MONITOR_CHOICE** when you need the user to select from a list of predefine
 - You need a complex form → use **FORM** step (modal)
   
 
+## Data Flow
+
+Reads flow context values referenced by message, choices, and custom-input configuration. Single mode writes `text` and optionally a structured `object`; multi mode writes `object` and optionally `list`; configured outputs rename these keys.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
@@ -45,8 +49,8 @@ Use **MONITOR_CHOICE** when you need the user to select from a list of predefine
 | Type | Description | Optional |
 |---|---|:---:|
 | `text` | The selected choice ID in single mode (or custom input when no choice selected). | false |
-| `object` | Structured selection result in multi mode: \{ selectedIds, customInput \} | false |
-| `list` | Selected choice IDs as list in multi mode. | false |
+| `object` | Optional structured selection result. In single mode it contains the selected ID and custom input; in multi mode it contains \{ selectedIds, customInput \}. | true |
+| `list` | Selected choice IDs as list in multi mode. | true |
 
 ## Examples
 

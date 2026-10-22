@@ -12,6 +12,14 @@ Removes all occurrences of the specified tags from the document or report while 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **CLEAR_TAGS** to remove named pure-text tags while preserving the underlying text content.
+
+## Data Flow
+
+Reads tag names from the resolved `tags` option or list input. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

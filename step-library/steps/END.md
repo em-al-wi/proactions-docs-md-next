@@ -13,6 +13,14 @@ Ends the execution of a flow based on the given condition, with optional notific
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **END** or **END_IF** to stop the current flow scope, optionally after a resolved condition and with a notification.
+
+## Data Flow
+
+Reads flow context values referenced by `condition` and notification message. Does not write flow context; throws `EndFlowError` when ending.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

@@ -14,6 +14,14 @@ Prime: Supports paths, UUIDs, and LOIDs (auto-formatted). Options insertionType,
 - **Applications:** all
 - **Scope:** story, report
 
+## When to Use
+
+Use **INSERT_OBJECT** to insert one or more referenced media or content objects into the active story or report.
+
+## Data Flow
+
+Reads the list input and values resolved from `in`, `path`, `referenceListIds`, or `referenceListObjects`. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

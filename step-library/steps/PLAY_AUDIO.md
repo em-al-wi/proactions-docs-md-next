@@ -12,6 +12,14 @@ Plays audio in a lightweight floating player. Audio source can be provided as a 
 - **Applications:** all
 - **Scope:** all
 
+## When to Use
+
+Use **PLAY_AUDIO** to present a data URL, HTTP(S) URL, or base64 audio source for user playback before continuing.
+
+## Data Flow
+
+Reads a resolved `in` value or `text` input as the audio source. Does not write flow context.
+
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|

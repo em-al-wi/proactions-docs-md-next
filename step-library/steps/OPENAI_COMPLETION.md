@@ -91,7 +91,7 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 | `instruction` | The user prompt to send to the LLM (supports templates) | None |false| true |None|None|
 | `behavior` | The system prompt to send to the LLM (supports templates) | None |false| false |None|None|
 | `options` | Additional request options object (temperature, n, top_p, model, etc.) | None |false| false |None|None|
-| `response_format` | Structured response format. Can be a string ("json_object" or "list") or an object with json_schema definition | None |false| false |None|None|
+| `response_format` | Structured response format. Can be a string ("json_object", "list", "text_edits" or "text_cuts") or an object with json_schema definition | None |false| false |None|None|
 | `outputAudio` | Configuration object to request audio output (voice/format) | None |false| false |None|None|
 | `toolChoice` | Optional tool selection policy (mapped to tool_choice in the model request) | None |false| false |None|None|
 | `parallelToolCalls` | Allow model/providers to emit multiple tool calls in one assistant turn (mapped to parallel_tool_calls) | None |false| false |None|None|
@@ -119,7 +119,7 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 | `toolStrict` | Enable strict tool argument validation (reject missing/extra arguments) | false |false| false |None|None|
 | `stream` | Enable streaming mode for incremental response delivery. When enabled, tokens are delivered as they are generated rather than waiting for the full response. Streaming is automatically disabled for incompatible configurations (json_schema, list, audio output). Defaults to false. | false |false| false |None|None|
 | `feedback` | Show streaming response in the Flow Execution Monitor. Defaults to true when stream is enabled. Set to false to use streaming for performance (faster time-to-first-token) without monitor visualization. | None |false| false |None|None|
-| `skills` | List of skill names to load. Skills provide system instructions and reference documents. Each skill is loaded from `/SysConfig/ProActions/Skills/<skillName>/SKILL.md`. Entries can also be objects `\{ name, when \}` where `when` (template expression or boolean, evaluated once per request) gates whether the skill is loaded. | None |false| false |None|None|
+| `skills` | List of skill names to load. Skills provide system instructions and reference documents. Each skill is loaded from `/SysConfig/ProActions/Skills/<skillName>/SKILL.md`. Entries can also be objects `{ name, when }` where `when` (template expression or boolean, evaluated once per request) gates whether the skill is loaded. | None |false| false |None|None|
 
 ## Outputs
 | Type | Description | Optional |
@@ -251,7 +251,7 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 
 
 **API Call Timing:**
-- Simple completions (< 1k tokens): 1-3 seconds
+- Simple completions (\< 1k tokens): 1-3 seconds
 - Large context (10k+ tokens): 3-10 seconds
 - Function calling: +1-2 seconds per tool call iteration
 - Vision (image analysis): +2-5 seconds depending on image size
