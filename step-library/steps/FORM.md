@@ -415,21 +415,21 @@ title: Example Action
 
 ## Common Pitfalls
 
-:::warning Don't forget that form values overwrite flowContext variables with same names
+:::warning[Don't forget that form values overwrite flowContext variables with same names]
 
 **Why:** If a form field is named "text" and flowContext.text already exists, the form value will replace it, potentially losing important data
 
 **Solution:** Use descriptive, unique field names that won't conflict with existing flowContext variables. Prefix form fields if needed (e.g., "form_text", "user_input").
 :::
 
-:::warning Don't use FORM for simple single-text inputs
+:::warning[Don't use FORM for simple single-text inputs]
 
 **Why:** FORM has more overhead and complexity than PROMPT. For a single text input, PROMPT is simpler and faster.
 
 **Solution:** Use PROMPT for single text inputs. Reserve FORM for multi-field forms or when you need specific input types (date, select, checkbox, diff).
 :::
 
-:::warning Don't forget to handle form cancellation
+:::warning[Don't forget to handle form cancellation]
 
 **Why:** Users can close the form modal without submitting, which stop the flow execution.
 

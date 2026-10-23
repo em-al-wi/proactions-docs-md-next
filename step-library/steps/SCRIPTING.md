@@ -222,35 +222,35 @@ tools:
 
 ## Common Pitfalls
 
-:::warning Don't forget to return flowContext in normal script mode
+:::warning[Don't forget to return flowContext in normal script mode]
 
 **Why:** Scripts must return the flowContext object (or a modified version) to continue the workflow. Forgetting this breaks the flow.
 
 **Solution:** Always end scripts with `return flowContext;` unless using `returnAs` mode. Use `returnAs` for simple expressions to avoid boilerplate.
 :::
 
-:::warning Don't mix template syntax with script syntax
+:::warning[Don't mix template syntax with script syntax]
 
 **Why:** Template mode uses `${}` for interpolation and expects JSON output. Script mode uses pure JavaScript. Mixing them causes errors.
 
 **Solution:** Use `template` for building JSON with interpolation. Use `script` for JavaScript logic. Never use both in the same step.
 :::
 
-:::warning Don't forget await for async operations with returnAs
+:::warning[Don't forget await for async operations with returnAs]
 
 **Why:** When using `returnAs` with async expressions, you must set `mode: "async"` or promises won't be resolved.
 
 **Solution:** Use `mode: "async"` with `returnAs` for any expression that returns a Promise (fetch, async functions, etc.).
 :::
 
-:::warning Don't pass user input directly to scripts
+:::warning[Don't pass user input directly to scripts]
 
 **Why:** User input in scripts can lead to code injection vulnerabilities. SCRIPTING has no sandboxing.
 
 **Solution:** Validate and sanitize all user input before using in scripts. Better yet, use declarative steps instead of SCRIPTING for user data.
 :::
 
-:::warning Don't expect flowContext mutations in returnAs mode to persist
+:::warning[Don't expect flowContext mutations in returnAs mode to persist]
 
 **Why:** When using `returnAs`, only the specified property is set. Direct mutations to flowContext are ignored.
 

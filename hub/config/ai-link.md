@@ -7,21 +7,25 @@ sidebar_position: 3
 
 # AI-Link Configuration
 
-The AI-Link module provides a unified gateway to multiple AI service providers through OpenAI-compatible endpoints. This guide covers both quick start and advanced configuration options.
+The AI-Link module provides a unified, OpenAI-compatible gateway to multiple AI service providers. Providers are declared as **AI-Link targets** (`aiTargets`) and served by the Hub's new built-in AI engine — no separate gateway process, with native provider authentication, automatic retries, composite routing and guardrails.
+
+:::warning[Legacy targets are deprecated]
+Provider entries declared under `targets:` are served by the legacy AI gateway, a separate subprocess the Hub starts for them. They are deprecated since Hub 1.3.0: they keep working in 1.3.x, but every request logs a deprecation warning, and support will be removed in a future release. See [Legacy targets](./ai-link-legacy.md) for the old format and [Migrating from targets to aiTargets](./ai-link-migration.md) for the conversion.
+:::
 
 ## Quick Start
 
 ### Minimal Configuration
 
-The simplest AI-Link configuration requires just an ID, provider, and API key:
+The simplest configuration requires an `id`, a `provider`, and an API key:
 
 ```yaml
-targets:
+aiTargets:
   - id: openai
     provider: openai
     apiKey: ${OPENAI_API_KEY}
     options:
-      model: gpt-4o-mini
+      model: gpt-6-luna
 ```
 
 Set the environment variable:
@@ -45,7 +49,17 @@ curl -X POST http://localhost:$PROACTIONS_HUB_PORT/v1/chat/completions \
   }'
 ```
 
-The `model` from the target's `options` will be merged with your request.
+The `model` from the target's `options` is merged into the request body. A `model` in the request body overrides it.
+
+## How Requests Are Routed
+
+The `x-target` header (or a `?target=` query parameter) selects the target. Resolution order is:
+
+1. The id matches an entry in `aiTargets` → the Hub serves the request in-process through the matching provider. If the entry is a composite (`strategy` + `routes`), the Hub resolves the attempt order first — see [Routing & Retries](./ai-link-routing.md).
+2. Otherwise the id matches an entry in the legacy `targets` list → the request goes through the legacy AI gateway, and the Hub logs one deprecation warning for that id.
+3. Otherwise the Hub returns `400` with `message: "INVALID_TARGET"` and `error: "No target with name <id> found"` (when no legacy `targets` are configured at all, the error reads `No targets configured with baseType targets`). A request without `x-target` or `?target=` returns `400` `MISSING_TARGET`.
+
+If the same id exists in both lists, **the `aiTargets` entry wins** — this is what makes migration transparent. Clients, and ProActions YAML `HUB` service `target:` / `x-target` values, need no change when a legacy target is migrated to an `aiTargets` entry with the same id.
 
 ## Available Endpoints
 
@@ -56,8 +70,38 @@ AI-Link provides OpenAI-compatible endpoints:
 - **Audio Speech:** `POST /v1/audio/speech`
 - **Audio Transcription:** `POST /v1/audio/transcriptions`
 - **Audio Translation:** `POST /v1/audio/translations`
+- **Responses API:** `POST /v1/responses`
 
-These HTTP endpoints do not provide OpenAI Realtime sessions. `HUB_VOICE_AGENT` requires the separate `WSS /proactions/realtime` relay, an OpenAI Realtime-capable target, and a compatible Hub deployment. See [Hub Voice Agent](../configuration.md#hub-voice-agent-realtime-websocket).
+All six are served by `aiTargets`. The Responses API is available on `aiTargets` only — there is no legacy fallback for it.
+
+### Modality support
+
+Not every provider supports every modality. An unsupported provider/modality combination returns `400` with the code `UNSUPPORTED_MODALITY` rather than a raw provider error — for example image generation on Anthropic or Mistral.
+
+Image generation forwards `n`, `size`, `quality`, `output_format` and `background` to OpenAI and Azure image models; an invalid value for the last three returns `400` `INVALID_IMAGE_OPTION`.
+
+Audio translation is available on `openai` and `openai-compatible` targets only, through the providers' OpenAI-compatible file-translation endpoint; other providers return `UNSUPPORTED_MODALITY` instead of silently performing same-language transcription. Accepted `response_format` values for translation are `json`, `text`, and `verbose_json`.
+
+### Responses API subset
+
+Supported:
+
+- Input as a plain string, or message items with roles `user`, `system`, `developer`, `assistant` and `input_text` (or string) content
+- Function tools and `tool_choice`
+- Streaming (SSE)
+- `instructions`
+- `text.format` (structured output)
+- `reasoning.effort` (same values as `reasoning_effort`)
+
+Rejected with `400`: `previous_response_id` (send the full input on every request) and built-in tools (`web_search`, `file_search`, `code_interpreter`).
+
+### Legacy-only endpoints
+
+`POST /v1/embeddings`, `POST /v1/completions` and `POST /v1/rerank` are served only by legacy targets. Called with an `aiTargets` id, they return `400` with `Endpoint <path> is not supported for aiTargets`.
+
+### Realtime
+
+These HTTP endpoints do not provide OpenAI Realtime sessions. `HUB_VOICE_AGENT` uses the dedicated WebSocket relay instead — see [Realtime Relay](./realtime.md).
 
 ## Streaming
 
@@ -77,452 +121,430 @@ curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/v1/chat/completions \
 The response uses `Content-Type: text/event-stream` and follows the standard OpenAI streaming format — each event is a `data:` line containing a JSON chunk, terminated by `data: [DONE]`.
 
 **Behaviour:**
-- Client disconnects are detected immediately — the upstream connection is torn down to prevent resource leaks.
+
+- Client disconnects are detected immediately — the upstream connection is torn down to prevent resource leaks. A client disconnect is never retried.
 - Streaming requests appear separately in the [Admin Panel](../admin-panel.md) AI-Link metrics (streaming ratio).
-- Errors that occur mid-stream (after headers are sent) are forwarded as a final `data:` error chunk.
+- A failure **before the first byte reaches the client** (connect error, `429`, `5xx`, timeout) is retried and can fall back to the next composite route; if every attempt fails, the client gets a clean `502` response and no partial stream.
+- A failure **after the headers are sent** closes the stream — bytes already delivered cannot be un-sent.
 
 ## Target Configuration Structure
 
-Each target in the `targets` array has this structure:
+Each `aiTargets` entry:
+
+| Field             | Required | Description                                                                                                        |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `id`              | yes      | Identifier sent in the `x-target` header; unique across `aiTargets`                                                 |
+| `provider`        | yes      | Provider name (see [Supported Providers](#supported-providers))                                                     |
+| `apiKey`          | no       | Provider credential (API key)                                                                                        |
+| `settings`        | no       | Provider connection settings (`baseURL`, `headers`, `region`, …), passed to the provider client as-is                |
+| `options`         | no       | Default request-body parameters, using OpenAI wire names. **The model belongs here: `options.model`**                |
+| `providerOptions` | no       | Provider-specific options keyed by provider id (e.g. `anthropic`), forwarded verbatim on chat, Responses, image, speech and transcription calls |
+| `requestTimeout`  | no       | Timeout in milliseconds; `0` disables the timeout. Default: `hub.http_client.timeout` (`120000`)                    |
+| `retry`           | no       | Per-target retry policy — see [Routing & Retries](./ai-link-routing.md)                                             |
+| `debug`           | no       | Per-target `logPrompt` / `logResponse` / `logUpstream` overrides — see [Logging](./logging.md)                      |
+| `guardrails`      | no       | Names of entries in the top-level `guardrails:` list — see [Guardrails](./ai-link-guardrails.md)                    |
+| `realtime`        | no       | `enabled`, `maxSessionDurationMs`, `idleTimeoutMs`, `maxMessageBytes`, `maxBytesPerSecond` — see [Realtime Relay](./realtime.md) |
+
+:::warning[No unknown keys]
+`aiTargets` entries reject unknown keys. Provider-specific settings (`region`, `headers`, `baseURL`, AWS keys, Azure resource names, …) must live under `settings:`, never at the entry root. Startup fails with `"<key>" is not allowed` naming the offending key.
+:::
 
 ```yaml
-targets:
-  - id: string              # Required: Unique identifier
-    provider: string        # Required (unless using config): Provider name
-    apiKey: string         # Required: API key for the provider
-    options: object        # Optional: Default request parameters
-    requestTimeout: number # Optional: Override default timeout (ms)
-    # Provider-specific fields...
+aiTargets:
+  - id: example
+    provider: openai
+    apiKey: ${EXAMPLE_API_KEY}
+    settings:
+      headers:
+        X-Custom-Header: value
+    options:
+      model: gpt-6-luna
+      max_completion_tokens: 2000
+    providerOptions: {}
+    requestTimeout: 120000
+    retry:
+      maxAttempts: 3
+      initialDelayMs: 500
+      maxDelayMs: 5000
+      backoffMultiplier: 2
+    debug:
+      logUpstream: false
+    guardrails: []
 ```
 
-### Required Fields
+### Composite targets
 
-| Field      | Description                                                                                         |
-| ---------- | --------------------------------------------------------------------------------------------------- |
-| `id`       | Unique identifier used in the `x-target` header                                                     |
-| `provider` | Provider name (see [Supported Providers](#supported-providers)) OR use `config` for complex routing |
-| `apiKey`   | API key for authentication (if required by provider)                                                |
+A composite entry fans one `x-target` id out to several concrete targets:
 
-### Optional Fields
+```yaml
+aiTargets:
+  - id: prod-chat
+    strategy: fallback        # or: loadbalance
+    routes:
+      - target: openai
+      - target: anthropic
+        weight: 1             # weights apply to loadbalance only
+```
 
-| Field            | Description                                 | Default          |
-| ---------------- | ------------------------------------------- | ---------------- |
-| `options`        | Default parameters merged with each request | `{}`             |
-| `requestTimeout` | Request timeout in milliseconds             | `120000` (2 min) |
+Composites may not declare `retry:` or `guardrails:` directly (both are rejected with an id-specific error — attach them to the routes instead), may not nest other composites, and may not reference unknown ids. See [Routing & Retries](./ai-link-routing.md).
 
 ## Supported Providers
 
-### Major AI Providers
+| Provider id        | Aliases                        | Authentication                    | Common `settings`                                            |
+| ------------------ | ------------------------------ | --------------------------------- | ------------------------------------------------------------ |
+| `openai`           | —                              | `apiKey`                          | `baseURL`, `headers`, `organization`, `project`              |
+| `azure`            | `azure-openai`                 | `apiKey` or Entra ID              | `resourceName`, `apiVersion`, `baseURL`, `headers`, `useEntraId`, `entraScope` |
+| `anthropic`        | —                              | `apiKey`                          | `baseURL`, `headers`, `authToken`                            |
+| `google`           | `gemini`, `google-ai`          | `apiKey`                          | `baseURL`, `headers`                                         |
+| `vertex`           | `vertex-ai`, `google-vertex-ai`| Service account                   | `project`, `location`, `googleAuthOptions`, `baseURL`, `headers` |
+| `bedrock`          | `amazon-bedrock`               | AWS keys, IAM role, or default chain | `region`, `accessKeyId`, `secretAccessKey`, `sessionToken`, `roleArn`, `externalId` |
+| `mistral`          | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `groq`             | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `deepseek`         | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `xai`              | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `cohere`           | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `togetherai`       | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `fireworks`        | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `perplexity`       | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `huggingface`      | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `openrouter`       | —                              | `apiKey`                          | `baseURL`, `headers`                                         |
+| `openai-compatible`| —                              | `apiKey`                          | `baseURL` (required in practice), `headers`                  |
 
-ProActions Hub supports 50+ AI providers. Here are the most commonly used:
+Credentials and settings left unset fall back to the provider's environment variable where one exists: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY` for the API key; `AWS_REGION` for Bedrock `settings.region`; `GOOGLE_VERTEX_PROJECT` / `GOOGLE_VERTEX_LOCATION` for Vertex `settings.project` / `settings.location`.
 
-| Provider ID     | Name                  | Configuration Options                                                   |
-| --------------- | --------------------- | ----------------------------------------------------------------------- |
-| `openai`        | OpenAI                | `openaiOrganization`, `openaiProject`                                   |
-| `azure-openai`  | Azure OpenAI          | `azureResourceName`, `azureDeploymentId`, `azureApiVersion`             |
-| `anthropic`     | Anthropic Claude      | None                                                                    |
-| `bedrock`       | AWS Bedrock           | `awsAccessKeyId`, `awsSecretAccessKey`, `awsRegion`, `awsSessionToken`  |
-| `vertex-ai`     | Google Vertex AI      | `vertexProjectId`, `vertexRegion`, `privateKey`, `clientEmail`, `scope` |
-| `google`        | Google Gemini         | None                                                                    |
-| `perplexity-ai` | Perplexity AI         | None                                                                    |
-| `openrouter`    | OpenRouter            | None                                                                    |
-| `workers-ai`    | Cloudflare Workers AI | `workersAiAccountId`                                                    |
-| `mistral-ai`    | Mistral AI            | None                                                                    |
-| `groq`          | Groq                  | None                                                                    |
-| `fireworks-ai`  | Fireworks AI          | None                                                                    |
-| `together-ai`   | Together AI           | None                                                                    |
-| `deepseek`      | DeepSeek              | None                                                                    |
-| `x-ai`          | xAI (Grok)            | None                                                                    |
+:::info[Any other provider]
+Any service exposing an OpenAI-compatible endpoint can be used through `openai-compatible` with `settings.baseURL` — Writer, Langdock, Ollama, Azure AI Inference, and similar. If a service has neither a native provider nor an OpenAI-compatible endpoint, keep it on a [legacy target](./ai-link-legacy.md) for now and contact Eidosmedia support.
+:::
 
-<details>
-<summary>View all 50+ supported providers</summary>
-
-| Provider ID     | Name             |
-| --------------- | ---------------- |
-| `ai21`          | AI21             |
-| `anyscale`      | Anyscale         |
-| `cerebras`      | Cerebras AI      |
-| `cohere`        | Cohere           |
-| `cortex`        | Cortex AI        |
-| `dashscope`     | DashScope        |
-| `deepbricks`    | Deepbricks       |
-| `deepinfra`     | Deep Infra       |
-| `deepseek`      | DeepSeek         |
-| `fireworks-ai`  | Fireworks AI     |
-| `github`        | GitHub Inference |
-| `google`        | Google Gemini    |
-| `groq`          | Groq             |
-| `inference-net` | Inference.net    |
-| `jina`          | Jina             |
-| `lambda`        | Lambdalabs       |
-| `lemonfox-ai`   | Lemonfox AI      |
-| `lingyi`        | Lingyi           |
-| `milvus`        | Milvus           |
-| `mistral-ai`    | Mistral AI       |
-| `monsterapi`    | Monster API      |
-| `moonshot`      | Moonshot AI      |
-| `nebius`        | Nebius           |
-| `nomic`         | Nomic AI         |
-| `novita-ai`     | Novita AI        |
-| `ollama`        | Ollama           |
-| `palm`          | Google PaLM      |
-| `predibase`     | Predibase        |
-| `recraft-ai`    | Recraft          |
-| `reka-ai`       | Reka AI          |
-| `replicate`     | Replicate        |
-| `sagemaker`     | Amazon SageMaker |
-| `sambanova`     | SambaNova        |
-| `segmind`       | Segmind          |
-| `siliconflow`   | Silicon Flow     |
-| `stability-ai`  | Stability AI     |
-| `triton`        | NVIDIA Triton    |
-| `upstage`       | Upstage AI       |
-| `voyage`        | Voyage AI        |
-| `zhipu`         | Zhipu            |
-
-</details>
-
-### Custom Providers
-
-For providers not in the list, use the `custom` provider:
-
-```yaml
-targets:
-  - id: my-custom-provider
-    provider: custom
-    endpoint: https://api.example.com{path}
-    apiKey: ${CUSTOM_API_KEY}
-    options:
-      model: my-model
-```
-
-The `{path}` placeholder will be replaced with the request path (e.g., `/v1/chat/completions`).
-
-## Provider-Specific Configuration
+## Provider Examples
 
 ### OpenAI
 
 ```yaml
-targets:
+aiTargets:
   - id: openai
     provider: openai
     apiKey: ${OPENAI_API_KEY}
-    openaiOrganization: ${OPENAI_ORG}      # Optional
-    openaiProject: ${OPENAI_PROJECT}       # Optional
+    settings:
+      organization: ${OPENAI_ORG}   # Optional
+      project: ${OPENAI_PROJECT}     # Optional
     options:
-      model: gpt-4o
-      temperature: 0.7
+      model: gpt-6.1-sol
       max_completion_tokens: 2000
 ```
 
 ### Azure OpenAI
 
 ```yaml
-targets:
-  - id: azure-openai
-    provider: azure-openai
+aiTargets:
+  - id: azure-openai-chat
+    provider: azure
     apiKey: ${AZURE_OPENAI_API_KEY}
-    azureResourceName: ${AZURE_OPENAI_RESOURCE}     # Required
-    azureDeploymentId: ${AZURE_OPENAI_DEPLOYMENT}   # Required
-    azureApiVersion: ${AZURE_OPENAI_API_VERSION}    # Required (e.g., "2024-02-15-preview")
+    settings:
+      resourceName: ${AZURE_OPENAI_RESOURCE}
+      apiVersion: ${AZURE_OPENAI_API_VERSION}
     options:
+      model: ${AZURE_OPENAI_DEPLOYMENT}   # Azure addresses models by deployment name
       temperature: 0.7
-      top_p: 0.95
-      max_tokens: 2000
+      max_tokens: 800
 ```
 
-Environment variables:
-
-```bash
-AZURE_OPENAI_API_KEY=your-key
-AZURE_OPENAI_RESOURCE=your-resource-name
-AZURE_OPENAI_DEPLOYMENT=gpt-4o
-AZURE_OPENAI_API_VERSION=2024-02-15-preview
-```
-
-### Anthropic Claude
+Microsoft Entra ID instead of a static key:
 
 ```yaml
-targets:
+aiTargets:
+  - id: azure-openai-entra
+    provider: azure
+    settings:
+      resourceName: ${AZURE_OPENAI_RESOURCE}
+      apiVersion: ${AZURE_OPENAI_API_VERSION}
+      useEntraId: true
+      entraScope: https://cognitiveservices.azure.com/.default   # optional, this is the default
+    options:
+      model: ${AZURE_OPENAI_DEPLOYMENT}
+```
+
+`useEntraId` resolves a token through `DefaultAzureCredential` (managed identity, Azure CLI, or an environment service principal), so no `apiKey` is configured.
+
+### Anthropic
+
+```yaml
+aiTargets:
   - id: anthropic
     provider: anthropic
     apiKey: ${ANTHROPIC_API_KEY}
     options:
-      model: claude-4-5-sonnet
+      model: claude-sonnet-5-5
       max_tokens: 12000
-      temperature: 0.7
 ```
 
 ### AWS Bedrock
 
+Static keys:
+
 ```yaml
-targets:
+aiTargets:
   - id: bedrock
     provider: bedrock
-    awsAccessKeyId: ${AWS_BEDROCK_ACCESS_KEY_ID}         # Required
-    awsSecretAccessKey: ${AWS_BEDROCK_SECRET_ACCESS_KEY} # Required
-    awsRegion: ${AWS_BEDROCK_REGION}                     # Required
-    awsSessionToken: ${AWS_BEDROCK_SESSION_TOKEN}        # Optional
+    settings:
+      region: ${AWS_BEDROCK_REGION}
+      accessKeyId: ${AWS_BEDROCK_ACCESS_KEY_ID}
+      secretAccessKey: ${AWS_BEDROCK_SECRET_ACCESS_KEY}
+      sessionToken: ${AWS_BEDROCK_SESSION_TOKEN}   # Optional
     options:
-      model: anthropic.claude-3-haiku-20240307-v1:0
-      max_tokens: 2000
+      model: "eu.anthropic.claude-haiku-5-5"
+      max_tokens: 800
 ```
 
-For cross-region inference profiles:
+Cross-region inference profile (the ARN or profile id goes in `options.model`):
 
 ```yaml
-targets:
+aiTargets:
   - id: bedrock-inference-profile
     provider: bedrock
-    awsAccessKeyId: ${AWS_BEDROCK_ACCESS_KEY_ID}
-    awsSecretAccessKey: ${AWS_BEDROCK_SECRET_ACCESS_KEY}
-    awsRegion: eu-north-1
-    requestTimeout: 300000  # 5 minutes for larger models
+    settings:
+      region: eu-north-1
+      accessKeyId: ${AWS_BEDROCK_ACCESS_KEY_ID}
+      secretAccessKey: ${AWS_BEDROCK_SECRET_ACCESS_KEY}
+    requestTimeout: 300000   # 5 minutes for larger models
     options:
-      model: arn:aws:bedrock:eu-north-1:123456789:inference-profile/eu.anthropic.claude-sonnet-4-20250514-v1:0
+      model: "arn:aws:bedrock:eu-north-1:123456789012:inference-profile/eu.anthropic.claude-sonnet-5-5"
       max_tokens: 8000
+```
+
+IAM role assumption via STS:
+
+```yaml
+aiTargets:
+  - id: bedrock-role
+    provider: bedrock
+    settings:
+      region: ${AWS_BEDROCK_REGION}
+      roleArn: ${AWS_BEDROCK_ROLE_ARN}
+      externalId: ${AWS_BEDROCK_EXTERNAL_ID}   # optional, for cross-account roles
+    options:
+      model: "eu.anthropic.claude-haiku-5-5"
+      max_tokens: 800
+```
+
+The STS call itself uses the target's default AWS credential chain; the assumed credentials are cached in memory and refreshed about 60 s before expiry, not re-requested on every call.
+
+Default credential chain (instance/container role, environment variables, shared config or SSO):
+
+```yaml
+aiTargets:
+  - id: bedrock-default-chain
+    provider: bedrock
+    settings:
+      region: ${AWS_BEDROCK_REGION}
+    options:
+      model: "eu.anthropic.claude-haiku-5-5"
+      max_tokens: 800
+```
+
+Credential precedence: static `accessKeyId` + `secretAccessKey` when both are set → otherwise `roleArn` STS assumption → otherwise the default AWS credential chain.
+
+### Google Gemini API
+
+```yaml
+aiTargets:
+  - id: gemini
+    provider: google
+    apiKey: ${GEMINI_API_KEY}
+    options:
+      model: gemini-3.8-flash
 ```
 
 ### Google Vertex AI
 
 ```yaml
-targets:
+aiTargets:
   - id: vertex
-    provider: vertex-ai
-    vertexProjectId: ${VERTEX_PROJECT_ID}    # Required
-    vertexRegion: ${VERTEX_REGION}           # Required
-    privateKey: ${VERTEX_PRIVATE_KEY}        # Required: Service account private key
-    clientEmail: ${VERTEX_CLIENT_EMAIL}      # Required: Service account email
-    scope: ${VERTEX_SCOPE}                   # Required: OAuth scope
+    provider: vertex
+    settings:
+      project: ${VERTEX_PROJECT_ID}
+      location: ${VERTEX_REGION}
+      googleAuthOptions:
+        credentials:
+          client_email: ${VERTEX_CLIENT_EMAIL}
+          private_key: ${VERTEX_PRIVATE_KEY}
     options:
-      model: gemini-2.0-flash-exp
+      model: gemini-3.8-flash
 ```
 
-### Google Gemini
+The default OAuth scope is `https://www.googleapis.com/auth/cloud-platform`; set `settings.googleAuthOptions.scopes: [<scope>]` only to request something else. Literal `\n` sequences in the private key are converted to real newlines automatically.
+
+### Mistral
 
 ```yaml
-targets:
-  - id: gemini
-    provider: google
-    apiKey: ${GEMINI_API_KEY}
+aiTargets:
+  - id: mistral
+    provider: mistral
+    apiKey: ${MISTRAL_API_KEY}
     options:
-      model: gemini-2.0-flash-exp
-```
-
-### Perplexity AI
-
-```yaml
-targets:
-  - id: perplexity
-    provider: perplexity-ai
-    apiKey: ${PERPLEXITY_API_KEY}
-    options:
-      model: sonar
-      temperature: 0.7
-      stream: false
+      model: mistral-small-latest
+      max_tokens: 800
 ```
 
 ### OpenRouter
 
 ```yaml
-targets:
+aiTargets:
   - id: openrouter
     provider: openrouter
     apiKey: ${OPENROUTER_API_KEY}
     options:
-      model: anthropic/claude-3.5-sonnet
+      model: anthropic/claude-sonnet-5.5
 ```
 
-### Cloudflare Workers AI
+### Hugging Face
 
 ```yaml
-targets:
-  - id: workers-ai
-    provider: workers-ai
-    apiKey: ${WORKERS_AI_API_KEY}
-    workersAiAccountId: ${WORKERS_AI_ACCOUNT_ID}  # Required
+aiTargets:
+  - id: huggingface-main
+    provider: huggingface
+    apiKey: ${HUGGINGFACE_API_KEY}
     options:
-      model: @cf/meta/llama-3-8b-instruct
+      model: meta-models/Muse-Glimmer-30B
 ```
 
-### Custom Provider with Endpoint
+### OpenAI-compatible endpoints
 
-For any custom OpenAI-compatible API:
+Writer:
 
 ```yaml
-targets:
-  - id: custom-api
-    provider: custom
-    endpoint: https://api.example.com{path}
-    apiKey: ${CUSTOM_API_KEY}
-    headers:                              # Optional custom headers
-      X-Custom-Header: value
+aiTargets:
+  - id: writer
+    provider: openai-compatible
+    apiKey: ${WRITER_API_KEY}
+    settings:
+      baseURL: https://api.writer.com/v1
     options:
-      model: my-model
+      model: palmyra-x6
 ```
 
-The `{path}` placeholder will be replaced with the actual endpoint path.
-
-## Advanced Configuration
-
-### Request Timeout Override
-
-Override the default 2-minute timeout for specific targets:
+Local Ollama:
 
 ```yaml
-targets:
-  - id: slow-model
-    provider: openai
-    apiKey: ${OPENAI_API_KEY}
-    requestTimeout: 300000  # 5 minutes
+aiTargets:
+  - id: local-ollama
+    provider: openai-compatible
+    settings:
+      baseURL: http://localhost:11434/v1
     options:
-      model: o1-preview
+      model: muse-glimmer
 ```
 
-### Default Options
-
-Options specified in the target configuration are merged with request parameters:
+Azure AI Inference (OpenAI-v1-compatible endpoints):
 
 ```yaml
-targets:
-  - id: openai-conservative
-    provider: openai
-    apiKey: ${OPENAI_API_KEY}
+aiTargets:
+  - id: azure-ai-inference-main
+    provider: openai-compatible
+    apiKey: ${AZURE_AI_INFERENCE_API_KEY}
+    settings:
+      baseURL: https://<your-resource>.services.ai.azure.com/openai/v1
     options:
-      model: gpt-4o
-      temperature: 0.1
-      max_completion_tokens: 500
-      top_p: 0.9
+      model: <your-deployment-name>
 ```
 
-Request parameters override defaults:
+## Request Defaults and Precedence
+
+The effective request body is `{ ...target.options, ...requestBody }` — request fields win, including `model`.
+
+Mapped chat-completion parameters:
+
+`model`, `messages`, `tools` (function tools), `tool_choice`, `temperature`, `top_p`, `max_tokens`, `max_completion_tokens` (wins over `max_tokens`), `stop`, `seed`, `frequency_penalty`, `presence_penalty`, `reasoning_effort` (`none` | `minimal` | `low` | `medium` | `high` | `xhigh` | `max`; invalid values return `400` `INVALID_REASONING_EFFORT`), `stream`, `stream_options.include_usage`, `response_format` (`json_object` | `json_schema`), `n`.
+
+Any other body key is dropped, and its name is logged:
+
+```
+AI-Engine dropped unsupported params: <names>
+```
+
+Provider-specific extras go into the target's `providerOptions`, keyed by provider id and forwarded verbatim to the provider. The example below raises Claude's thinking effort (Claude 5.5 models think adaptively; `effort` steers how much).
+
+```yaml
+aiTargets:
+  - id: anthropic-thinking
+    provider: anthropic
+    apiKey: ${ANTHROPIC_API_KEY}
+    providerOptions:
+      anthropic:
+        effort: high
+    options:
+      model: claude-sonnet-5-5
+      max_tokens: 12000
+```
+
+## Structured Output
+
+`response_format: json_object` and `response_format: json_schema` are executed — the target model is wrapped so the provider enforces the requested format:
+
+```bash
+curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-target: openai" \
+  -d '{
+    "messages": [{"role": "user", "content": "Summarize the article in one sentence."}],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "summary",
+        "schema": {
+          "type": "object",
+          "properties": {"summary": {"type": "string"}},
+          "required": ["summary"],
+          "additionalProperties": false
+        }
+      }
+    }
+  }'
+```
+
+The Responses API supports the equivalent `text.format`.
+
+## Timeouts, Retries and Fallback
+
+Chat completions and the Responses API retry retryable upstream failures by default — 3 total attempts (1 initial + 2 retries) with equal-jitter exponential backoff — configurable globally under `hub.http_client.retry` and per target under `retry`. A route's retries share that route's `requestTimeout` budget, so raise the timeout if you raise the attempt count. Images, speech, transcription and translation make a single attempt.
+
+Full details, including composite `fallback`/`loadbalance` behaviour: [Routing, Retries & Timeouts](./ai-link-routing.md).
+
+## Guardrails
+
+Top-level `guardrails:` entries (regex, length, JSON, PII, LLM judge, moderation API) attach to a concrete `aiTargets` entry by name and run before the request, after the response, or both. A `deny` action returns HTTP `422` with a `guardrail_violation` body.
+
+Full reference: [Guardrails](./ai-link-guardrails.md).
+
+## Errors
+
+| Status | Meaning                                                                                          |
+| ------ | ------------------------------------------------------------------------------------------------ |
+| `400`  | Validation error — e.g. `MISSING_TARGET`, `INVALID_TARGET`, `MISSING_MODEL`, `MISSING_MESSAGES`, `UNSUPPORTED_MODALITY`, or a legacy-only endpoint on an `aiTargets` id |
+| `422`  | Guardrail violation (`guardrail_violation`)                                                       |
+| `502`  | Upstream provider failure or timeout                                                              |
+| `503`  | Legacy target requested while the legacy AI gateway is not ready                                   |
+
+Upstream failures return a JSON body:
 
 ```json
 {
-  "messages": [...],
-  "temperature": 0.8  // This overrides the default 0.1
+  "message": "External service error",
+  "target": "openai",
+  "provider": "openai",
+  "model": "gpt-6-luna",
+  "timestamp": "2026-05-04T09:12:31.004Z",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "statusCode": 500,
+  "upstreamError": { "error": { "message": "..." } }
 }
 ```
 
-### Multiple Targets for Same Provider
+`endpoint` is the upstream URL. `upstreamError` is the provider's response body (parsed as JSON when possible). `headers` carries `retry-after`, `x-ratelimit-remaining`, `x-ratelimit-reset` and `x-request-id` when the provider sent them.
 
-You can configure multiple targets for the same provider with different settings:
+A timeout returns `message: "Request timeout"` with `error`, `timeoutMs`, `timeoutSeconds` and `suggestion`.
 
-```yaml
-targets:
-  - id: openai-fast
-    provider: openai
-    apiKey: ${OPENAI_API_KEY}
-    options:
-      model: gpt-4o-mini
-      max_completion_tokens: 500
-
-  - id: openai-quality
-    provider: openai
-    apiKey: ${OPENAI_API_KEY}
-    options:
-      model: gpt-4o
-      max_completion_tokens: 4000
-      temperature: 0.3
-```
-
-### Load Balancing Configuration
-
-For advanced routing strategies, use the `config` field with AI-Link's native configuration:
-
-```yaml
-targets:
-  - id: load-balanced
-    config:
-      strategy:
-        mode: loadbalance
-      targets:
-        - provider: openai
-          api_key: ${OPENAI_API_KEY}
-          override_params:
-            model: gpt-4o-mini
-        - provider: anthropic
-          api_key: ${ANTHROPIC_API_KEY}
-          override_params:
-            model: claude-3-5-haiku-20241022
-```
-
-:::info Advanced Configuration
-When using `config`, you cannot use the `provider` field. The `config` object is passed directly to AI-Link for advanced routing strategies.
-:::
-
-### Failover Configuration
-
-Configure automatic failover between providers:
-
-```yaml
-targets:
-  - id: with-failover
-    config:
-      strategy:
-        mode: fallback
-      targets:
-        - provider: openai
-          api_key: ${OPENAI_API_KEY}
-          override_params:
-            model: gpt-4o
-        - provider: anthropic
-          api_key: ${ANTHROPIC_API_KEY}
-          override_params:
-            model: claude-3-5-sonnet-20241022
-```
-
-### Guardrails
-
-Add content moderation hooks:
-
-```yaml
-targets:
-  - id: with-guardrails
-    config:
-      provider: openai
-      api_key: ${OPENAI_API_KEY}
-      beforeRequestHooks:
-        - type: guardrail
-          id: content_check
-          deny: true
-          checks:
-            - id: mistral.moderateContent
-              parameters:
-                credentials:
-                  apiKey: ${MISTRAL_API_KEY}
-                categories:
-                  - pii
-                  - sexual
-                  - hate_and_discrimination
-```
-
-## Configuration Best Practices
-
-### Security
-
-1. **Never hardcode API keys** - Always use environment variables
-2. **Use environment-specific configs** - Separate dev/staging/production
-3. **Limit default max_tokens** - Prevent unexpected costs
-4. **Set reasonable timeouts** - Avoid hanging requests
-
-### Performance
-
-1. **Configure appropriate timeouts** - Longer for complex models
-2. **Use specific model names** - Don't rely on provider defaults
-3. **Set conservative defaults** - Override in requests when needed
-
-### Cost Control
-
-1. **Set max_tokens limits** - Control maximum cost per request
-2. **Use cheaper models by default** - Override for quality when needed
-3. **Monitor token usage** - Enable AI-Link logging (see [Logging Configuration](logging.md))
-
-### Reliability
-
-1. **Configure multiple targets** - Enable failover scenarios
-2. **Set appropriate timeouts** - Balance responsiveness and success rate
-3. **Use load balancing** - Distribute load across providers
+Network failures return `message` `Connection refused`, `DNS resolution failed` or `Connection reset`, with `error`, `code` and `suggestion`.
 
 ## Testing Your Configuration
 
@@ -540,91 +562,71 @@ curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/v1/chat/completions \
   }'
 ```
 
+Add `"stream": true` to the body (and `--no-buffer` to curl) to exercise the streaming path.
+
 ### Test with Swagger UI
 
 If Swagger is enabled (`swagger.enabled: true`):
 
 1. Navigate to `http://localhost:${PROACTIONS_HUB_PORT}/docs`
 2. Find the `/v1/chat/completions` endpoint
-3. Add `x-target` header
-4. Execute test request
+3. Add the `x-target` header
+4. Execute the test request
 
-### Verify Token Logging
+### Verify the target is served by the new engine
 
-Enable AI-Link logging to verify token usage tracking:
+An `aiTargets` entry is served in-process, so:
 
-```yaml
-logging:
-  types:
-    aiLink:
-      enabled: true
-      console: true
-      logPrompt: false
-      logResponse: false
-```
-
-Check logs for token usage:
-
-```json
-{
-  "level": "info",
-  "message": "AI request completed",
-  "target": "openai",
-  "model": "gpt-4o-mini",
-  "promptTokens": 15,
-  "completionTokens": 25,
-  "totalTokens": 40
-}
-```
+- No `AI-Link request served via deprecated legacy target — migrate '<id>' to aiTargets` warning appears in the logs (log type `aiLink`) for that id.
+- Once no legacy `targets:` entries remain, `GET /ready` reports the legacy gateway check (`ai_gateway`) as healthy with `skipped: true`, and no gateway subprocess is started.
 
 ## Troubleshooting
 
-### Target Not Found
+### `"<key>" is not allowed` at startup
 
-**Error:** `Target not found: xyz`
+A legacy provider field was placed at the root of an `aiTargets` entry. Move it under `settings:` (or into `options:` if it is a request parameter) — see the [field mapping table](./ai-link-migration.md#general-field-mapping).
 
-**Solution:** Verify the target ID in config.yaml matches the `x-target` header value.
+### `INVALID_TARGET`
 
-### Provider Authentication Failed
+No `aiTargets` or legacy `targets` entry has the requested id. Check that the `x-target` header (or the ProActions `target:` value) matches an `id` exactly.
 
-**Error:** `401 Unauthorized` or `403 Forbidden`
+### `MISSING_MODEL`
 
-**Solution:**
+Neither the request body nor the target supplied a model. Set `options.model` on the target, or send `"model"` in the body.
 
-1. Verify API key is set correctly
-2. Check provider-specific fields (deployment ID, region, etc.)
-3. Ensure API key has necessary permissions
+### Provider authentication failed
 
-### Request Timeout
+**Error:** `401 Unauthorized` or `403 Forbidden`.
 
-**Error:** `Request timeout after 120000ms`
+1. Verify the API key is set and substituted (`${VAR}` resolved, not left literal).
+2. Check the provider-specific `settings` (Azure `resourceName`, Bedrock `region`, Vertex `project`/`location`).
+3. Ensure the credential has the required permissions (for Bedrock: `bedrock:InvokeModel`; for Vertex: the Vertex AI role on the project).
 
-**Solution:** Increase `requestTimeout` for the target:
+### Request timeout
 
-```yaml
-requestTimeout: 300000  # 5 minutes
-```
+**Error:** `502` with `message: "Request timeout"`.
 
-### Invalid Model
-
-**Error:** `Model not found` or `Invalid model`
-
-**Solution:** Verify the model name is correct for the provider. Check provider documentation.
-
-### Azure OpenAI Configuration
-
-**Error:** `Missing required field: azureDeploymentId`
-
-**Solution:** Azure OpenAI requires three additional fields:
+Increase `requestTimeout` on the target:
 
 ```yaml
-azureResourceName: your-resource
-azureDeploymentId: your-deployment
-azureApiVersion: 2024-02-15-preview
+requestTimeout: 300000   # 5 minutes
 ```
+
+If the target has a blocking post-phase guardrail and serves streams, the timeout covers the whole generation, not just time-to-first-byte — see [Guardrails](./ai-link-guardrails.md).
+
+### Vertex AI: `DECODER routines::unsupported`
+
+The service-account private key is malformed. Literal `\n` sequences are normalized automatically, so check the surrounding quoting: the value must contain the PEM body between `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines with no stray quotes or trailing whitespace.
+
+### Bedrock: `Could not load credentials`
+
+No usable credential was found. Set `settings.accessKeyId` and `settings.secretAccessKey`, or `settings.roleArn`, or give the container a default AWS credential source (instance/container role or environment variables).
 
 ## Next Steps
 
-- [Configure Proxy targets](proxy.md) for HTTP forwarding
-- [Set up YouTube integration](youtube.md) for video uploads
-- [Configure Logging](logging.md) for token usage monitoring
+- [Migrating from targets to aiTargets](./ai-link-migration.md)
+- [Routing, Retries & Timeouts](./ai-link-routing.md)
+- [Guardrails](./ai-link-guardrails.md)
+- [Realtime Relay](./realtime.md)
+- [Logging](./logging.md)
+- [Legacy targets (deprecated)](./ai-link-legacy.md)

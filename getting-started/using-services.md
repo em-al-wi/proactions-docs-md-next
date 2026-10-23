@@ -47,7 +47,7 @@ AI_KIT:
 
 ### Supported Services via Hub
 
-ProActions Hub normalizes access to over 40+ AI providers, including:
+ProActions Hub provides a unified interface to 17 native AI providers plus any OpenAI-compatible endpoint, and can proxy further HTTP services. Examples:
 
 **Major AI Providers:**
 
@@ -93,7 +93,7 @@ The most commonly used step for AI interactions:
 
   options:
     # Model settings
-    model: "gpt-4"  # Optional, defaults to Hub configuration
+    model: "gpt-6-luna"  # Optional, defaults to Hub configuration
     max_tokens: 500
     temperature: 0.7  # 0.0 = deterministic, 1.0 = creative
 
@@ -103,6 +103,8 @@ The most commonly used step for AI interactions:
     frequency_penalty: 0.0
     presence_penalty: 0.0
 ```
+
+Reasoning models (GPT-6, Claude 5.5) ignore the sampling parameters `temperature`, `top_p`, `frequency_penalty` and `presence_penalty` unless reasoning is turned off with `reasoning_effort: none` (GPT-6 Luna and GPT-6 Sol).
 
 ### Structured Outputs
 
@@ -159,11 +161,12 @@ Generate audio from text:
   speed: 1.0
 
 - step: PLAY_AUDIO
+  in: '{{ flowContext.blob }}'
 ```
 
 ### HUB_IMAGE_GENERATION: Generate Images
 
-Create images with GPT-Image-1 or DALL·E:
+Create images with OpenAI GPT Image models:
 
 ```yaml
 - step: PROMPT
@@ -171,9 +174,9 @@ Create images with GPT-Image-1 or DALL·E:
 
 - step: HUB_IMAGE_GENERATION
   prompt: "{{ flowContext.text }}"
-  model: "dall-e-3"
+  model: "gpt-image-2.5-sunburst"
   size: "1024x1024"
-  quality: "standard"  # or "hd"
+  quality: "high"  # auto, low, medium, high, xhigh, max
 
 - step: IMAGE_PICKER
 ```

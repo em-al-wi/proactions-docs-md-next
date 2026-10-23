@@ -9,7 +9,7 @@ sidebar_position: 6
 
 The **MCP Gateway** allows ProActions Hub to host and connect to [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers. This enables the ProActions Browser Client (Swing/Prime) to access backend tools, filesystems, databases, and other resources through a standardized protocol.
 
-:::danger Third-Party Software Disclaimer
+:::danger[Third-Party Software Disclaimer]
 Enabling the MCP Gateway allows the dynamic installation and execution of third-party software packages (via `npx`, `uv`, `pip`, etc.) from external sources such as npm and PyPI.
 
 **Important:**
@@ -76,7 +76,7 @@ mcp:
       toolTimeout: 30000
 ```
 
-:::tip Authentication
+:::tip[Authentication]
 Use the `headers` option to pass authentication tokens or API keys to remote HTTP servers. Environment variable substitution is supported.
 :::
 
@@ -225,7 +225,7 @@ For `stdio` transport, only specific commands are allowed to be executed. The de
 
 Attempts to use other commands will result in a configuration validation error.
 
-:::info Remote Transports
+:::info[Remote Transports]
 The command allowlist only applies to `stdio` transport. Remote transports (`http`, `websocket`) do not spawn processes and are not subject to command validation.
 :::
 

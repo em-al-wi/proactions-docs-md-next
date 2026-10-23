@@ -19,7 +19,7 @@ Four pieces work together:
 
 The cut engine is built on the same block engine as [Story Text Edits](./story-text-edits.md): links, embedded objects, placeholders and strikeouts are protected, and a cut that would damage them is never offered.
 
-:::tip Ready-to-use configuration
+:::tip[Ready-to-use configuration]
 A complete, commented section — input in characters or lines, up to three rounds of "ask for more cuts", and an outcome message — is shown in [Complete Section Example](#complete-section-example). Copy it, adapt the values marked `◆ ADAPT`, and include it in `SECTIONS`.
 :::
 
@@ -104,7 +104,7 @@ An answer for the sample story above:
 
 The first two cuts are alternatives (group `guides`); the third is independent.
 
-:::warning Pass the blocks with `| safe`
+:::warning[Pass the blocks with `| safe`]
 When the blocks are part of a longer template — for example an `instruction:` block with more text — write `{{ flowContext.blocks | safe }}`. Without `| safe`, the template engine escapes `<b>` to `&lt;b&gt;`, the model copies the escaped text into `find`, and the cuts fail with `not_found`. A template that consists only of `"{{ flowContext.blocks }}"` is passed through unchanged.
 :::
 

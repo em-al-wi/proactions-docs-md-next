@@ -39,7 +39,7 @@ Voice agents require all of the following:
 - A secure browser context (`https://`) with microphone permission
 - `MediaDevices.getUserMedia`, Web Audio API, and `AudioWorklet` support
 - The Flow Monitor enabled, because the pinned Voice Bar contains the session controls
-- A Realtime-capable OpenAI model, such as `gpt-realtime-2`
+- A Realtime-capable OpenAI model, such as `gpt-realtime-2.1`
 - Network and Content Security Policy (CSP) rules that permit the connections described below
 
 For direct OpenAI sessions, the browser needs HTTPS and WSS access to `api.openai.com`; WebRTC media must also be permitted for the preferred transport. If WebRTC negotiation fails, the step falls back to WebSocket.
@@ -60,7 +60,7 @@ HUB_REALTIME:
   # {BASE_URL}/swing/proactions/realtime in a standard Swing deployment.
   endpoint: '{BASE_URL}/swing'
   target: openai-realtime
-  model: gpt-realtime-2
+  model: gpt-realtime-2.1
 ```
 
 Then reference it from the step:
@@ -75,21 +75,23 @@ Then reference it from the step:
 
 The `target` must identify an OpenAI Realtime-capable target in Hub. Claude, Gemini, and ordinary chat-completion targets are not interchangeable with a Realtime target.
 
-The Hub administrator must configure the matching target and deploy a Hub version that provides the Realtime WebSocket relay:
+The Hub administrator must configure the matching target and deploy a Hub version that provides the Realtime WebSocket relay — requires ProActions Hub 1.3.0 or later with `hub.realtime` enabled. See [Realtime Relay](../../hub/config/realtime.md).
 
 ```yaml
 # ProActions Hub config.yaml
-targets:
+aiTargets:
   - id: openai-realtime
     provider: openai
     apiKey: ${OPENAI_API_KEY}
     options:
-      model: gpt-realtime-2
+      model: gpt-realtime-2.1
+    realtime:
+      enabled: true
 ```
 
-The deployment must expose `WSS /proactions/realtime`, authenticate the EDAPI bearer token sent in `Sec-WebSocket-Protocol`, preserve the requested WebSocket subprotocols, and forward the selected target to OpenAI Realtime. If a reverse proxy sits in front of Hub, configure WebSocket upgrades, trusted TLS, and a connection timeout long enough for `maxDurationSecs`. Confirm relay availability with your Hub administrator; a Hub installation that only exposes the HTTP endpoints under `/v1` does not support `HUB_VOICE_AGENT`.
+The deployment must expose `WSS /proactions/realtime`, authenticate the EDAPI or Hub token sent in `Sec-WebSocket-Protocol`, preserve the requested WebSocket subprotocols, and forward the selected target to OpenAI Realtime. If a reverse proxy sits in front of Hub, configure WebSocket upgrades, trusted TLS, and a connection timeout long enough for `maxDurationSecs`. Confirm relay availability with your Hub administrator; a Hub installation that only exposes the HTTP endpoints under `/v1` does not support `HUB_VOICE_AGENT`.
 
-At session start, AI-Kit automatically verifies that the WebSocket upgrade selects the `realtime` subprotocol and that Hub creates the upstream OpenAI session within 15 seconds. It fails before opening the microphone when the relay route, EDAPI authentication, proxy subprotocol forwarding, target credentials, or Hub egress are not ready.
+At session start, AI-Kit automatically verifies that the WebSocket upgrade selects the `realtime` subprotocol and that Hub creates the upstream OpenAI session within 15 seconds. It fails before opening the microphone when the relay route, authentication, proxy subprotocol forwarding, target credentials, or Hub egress are not ready.
 
 ### Direct OpenAI
 
@@ -101,7 +103,7 @@ OPENAI_REALTIME:
   apiKey: 'sk-...'
   # Base URL only: do not append /v1.
   endpoint: 'https://api.openai.com'
-  model: gpt-realtime-2
+  model: gpt-realtime-2.1
 ```
 
 ```yaml
@@ -248,7 +250,7 @@ falsely, or where explicit control over when the model listens is required.
 
 ```yaml
 - step: OPENAI_VOICE_AGENT
-  model: gpt-realtime-2               # falls back to the service config's model, then gpt-realtime-2
+  model: gpt-realtime-2.1             # falls back to the service config's model, then gpt-realtime-2
   voice: marin                        # output voice (default: marin)
   reasoningEffort: low                # reasoning-capable models only (gpt-realtime-2 family); default: low
   transcriptionModel: gpt-4o-transcribe  # server-side transcription of the user's speech
@@ -357,7 +359,7 @@ Add the service to `/SysConfig/ProActions/services.ai-kit.services.yaml`:
 HUB_REALTIME:
   endpoint: '{BASE_URL}/swing'
   target: openai-realtime
-  model: gpt-realtime-2
+  model: gpt-realtime-2.1
 ```
 
 Create `/SysConfig/ProActions/sections/voice-assistant.ai-kit.section.yaml`:
@@ -375,7 +377,7 @@ actions:
       - step: HUB_VOICE_AGENT
         monitorLabel: Voice Assistant
         service: HUB_REALTIME
-        model: gpt-realtime-2
+        model: gpt-realtime-2.1
         voice: marin
         behavior: |
           You are a helpful editorial voice assistant.
@@ -443,7 +445,7 @@ To use direct OpenAI instead, define `OPENAI_REALTIME` as shown above and replac
 | Hub URL contains `/proactions/proactions/realtime` | Use the Hub base endpoint before `/proactions`; in a standard Swing deployment this is `{BASE_URL}/swing`. |
 | Hub returns 404 or the WebSocket never upgrades | The deployed Hub or reverse proxy does not expose `/proactions/realtime`; contact the Hub administrator. |
 | Hub authentication fails | Run in Swing/Prime and confirm an EDAPI token is available and WebSocket subprotocol headers are preserved. |
-| Direct session uses the wrong model | Set `model: gpt-realtime-2` in the dedicated service or step. |
+| Direct session uses the wrong model | Set `model: gpt-realtime-2.1` in the dedicated service or step. |
 | Microphone access fails | Use HTTPS, grant site permission, verify an input device exists, and check browser policy. |
 | WebRTC falls back to WebSocket | Check UDP/media negotiation, firewall policy, and browser diagnostics. The fallback is expected when WebRTC cannot connect. |
 | Voice Bar does not appear | Enable the Flow Monitor for the action/section. |

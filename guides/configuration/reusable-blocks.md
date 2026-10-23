@@ -12,7 +12,7 @@ Every scope level supports the same four sub-keys inside a `blocks:` entry:
 blocks:
   constants:     # Static values — strings, numbers, booleans
     apiBase: /SysConfig/ProActions
-    defaultModel: gpt-5.4
+    defaultModel: gpt-6.1-sol
 
   vars:          # Lazy Nunjucks expressions — re-evaluated at point-of-use
     userLabel: "{{ flowContext.userName | default('User') }}"
@@ -59,7 +59,7 @@ blocks:
     translationEndpoint: "{{ global.constants.apiBase }}/v2/translate"
 ```
 
-:::note Circular `vars` references
+:::note[Circular `vars` references]
 A `vars` entry that references another `vars` entry that eventually references the first one will throw a deterministic error at runtime: `Circular vars reference detected: a → b → a`. Reference `constants` (not other `vars`) to avoid this.
 :::
 
@@ -83,7 +83,7 @@ AI_KIT:
   BLOCKS:
     constants:
       apiBase: /SysConfig/ProActions
-      defaultModel: gpt-4o
+      defaultModel: gpt-6.1-sol
     flows:
       onError:
         - step: SHOW_NOTIFICATION
@@ -203,7 +203,7 @@ A module file is a plain YAML file with a `blocks:` (or `BLOCKS:`) key at the ro
 
 blocks:
   constants:
-    sharedModel: gpt-4o-mini
+    sharedModel: gpt-6-luna
     maxRetries: 3
 
   vars:
@@ -295,7 +295,7 @@ Use `{{ namespace.type.key }}` in any step configuration value that supports var
   ref: "{{ flowContext.selectedFlow }}"   # e.g. resolves to "section.flows.postProcess"
 ```
 
-:::tip Flow isolation
+:::tip[Flow isolation]
 A called flow runs in an isolated flow-control context. `BREAK` and `END_IF` inside a called flow only affect that flow — they do not propagate to the caller. Use the `END` step to stop the entire workflow from within a called flow.
 :::
 
@@ -395,7 +395,7 @@ AI_KIT:
   BLOCKS:
     constants:
       apiBase: /SysConfig/ProActions
-      defaultModel: gpt-4o
+      defaultModel: gpt-6.1-sol
     vars:
       # Lazy: re-evaluated on every access against current flowContext
       userLabel: "{{ flowContext.userName | default('User') }}"

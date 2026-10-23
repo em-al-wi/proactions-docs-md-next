@@ -24,7 +24,7 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 - You want to analyze or extract structured information from text
 - You need JSON/structured output from natural language input
 - You want to use function/tool calling capabilities
-- You need to process images with vision models (gpt-4-vision, gpt-4o)
+- You need to process images with vision models (gpt-6-luna, gpt-6.1-sol)
 - You need to process or generate audio (with supported models)
 
 **Don't use OPENAI_COMPLETION when:**
@@ -226,21 +226,21 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 
 ## Common Pitfalls
 
-:::warning Don't use high temperature for factual or structured output tasks
+:::warning[Don't use high temperature for factual or structured output tasks]
 
 **Why:** High temperature (> 0.7) increases randomness, which can produce creative but inaccurate or inconsistent responses, especially problematic for JSON output or factual extraction
 
 **Solution:** Use temperature 0.0-0.3 for factual tasks, summaries, structured output, or data extraction. Use 0.7-1.0 only for creative writing, brainstorming, or varied responses.
 :::
 
-:::warning Don't forget to handle API failures and empty responses
+:::warning[Don't forget to handle API failures and empty responses]
 
 **Why:** API calls can fail due to rate limits, network issues, invalid API keys, or service outages. Empty responses can break subsequent steps that expect data.
 
 **Solution:** Wrap OPENAI_COMPLETION in TRY block for error handling, and validate output exists before using it in subsequent steps.
 :::
 
-:::warning Don't include sensitive or confidential data in prompts without data processing agreement
+:::warning[Don't include sensitive or confidential data in prompts without data processing agreement]
 
 **Why:** Data sent to OpenAI's API may be stored and potentially used for model training unless you have a specific data processing agreement.
 
@@ -257,7 +257,7 @@ Use **OPENAI_COMPLETION** when you need to leverage OpenAI models for text gener
 - Vision (image analysis): +2-5 seconds depending on image size
 
 **Cost Optimization:**
-- Use cheaper models (gpt-3.5-turbo, gpt-4o-mini) for simple tasks
+- Use cheaper models (gpt-6-luna) for simple tasks
 - Set \`max_tokens\` in options to prevent unexpectedly long (expensive) responses
 - Cache results when processing identical content multiple times
 - Use \`response_format\` for structured output instead of parsing free-form text

@@ -81,7 +81,7 @@ Azure OpenAI speech step alias.
 ```yaml
 
 - step: AZURE_OPENAI_SPEECH
-  model: "tts-1"
+  model: "gpt-4o-mini-tts"
   voice: "alloy"
   response_format: "mp3"
 
@@ -208,7 +208,7 @@ ProActionsHub-compatible speech generation step. Inherits behavior from OPENAI_S
 ```yaml
 
 - step: HUB_SPEECH
-  model: "tts-1"
+  model: "gpt-4o-mini-tts"
   voice: "alloy"
   response_format: "mp3"
 
@@ -349,7 +349,7 @@ Delete a thread using its id. Provide the thread object or id via inputs.
 
 ### [OPENAI_IMAGE_GENERATION](./steps/OPENAI_IMAGE_GENERATION.md)
 
-Generate images using OpenAI image models (DALL·E and GPT-Image-1). Supports model, size, quality, count (n), response_format and other parameters. The generated images are stored in the configured output key or default `imageList`.
+Generate images using OpenAI GPT Image models (default gpt-image-2.5-sunburst). Supports model, size, quality, count (n), output_format and background. The generated images are stored in the configured output key or default `imageList`.
 
 
 **Aliases:** SERVICE_OPENAI_IMAGE_GENERATION
@@ -392,7 +392,7 @@ Generate speech audio using the OpenAI Speech API (or corresponding Hub/Azure va
 ```yaml
 
 - step: OPENAI_SPEECH
-  model: "tts-1"
+  model: "gpt-4o-mini-tts"
   voice: "alloy"
   response_format: "mp3"
 

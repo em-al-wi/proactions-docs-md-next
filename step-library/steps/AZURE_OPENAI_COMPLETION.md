@@ -6,7 +6,7 @@ sidebar_position: 1
 
 Chat/completion step that calls OpenAI (or Hub/Azure variants). Supports messages, images, audio, attachments, tools (functions), structured outputs (json_schema/json_object/list), reasoning and audio output. Many step-level configuration options are supported via cfg.*.
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_COMPLETION`.
 :::
 

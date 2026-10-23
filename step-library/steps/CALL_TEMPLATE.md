@@ -75,7 +75,7 @@ Use explicit scoped refs for reusable flows in BLOCKS/imports namespaces.
 
 ## Common Pitfalls
 
-:::warning Expecting END_IF or BREAK to stop the parent workflow
+:::warning[Expecting END_IF or BREAK to stop the parent workflow]
 
 **Why:** Templates execute in an isolated flow control context. Flow control steps inside a template only affect the template itself.
 

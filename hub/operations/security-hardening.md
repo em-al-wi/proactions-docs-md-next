@@ -53,7 +53,7 @@ PROACTIONS_SESSION_SECRET=<generate-random-secret>
 PROACTIONS_REDIS_URL=redis://localhost:6379
 ```
 
-:::tip Generate Secret
+:::tip[Generate Secret]
 Generate a strong session secret:
 ```bash
 openssl rand -base64 32
@@ -83,7 +83,7 @@ AUTH_TOKEN_1=<strong-random-token-1>
 AUTH_TOKEN_2=<strong-random-token-2>
 ```
 
-:::warning Development Only
+:::warning[Development Only]
 Token-based auth is less secure than EDAPI. Use only for development or testing.
 :::
 
@@ -148,7 +148,7 @@ auth:
 | `sameSite` | `strict` | Prevents CSRF attacks |
 | `maxAge` | `86400000` | Session timeout (24 hours) |
 
-:::info Auto-Detection
+:::info[Auto-Detection]
 If `secure` is not specified, it's automatically set to `true` when TLS is enabled or `trustProxy` is configured.
 :::
 
@@ -227,7 +227,7 @@ hub:
       - 192.168.0.0/16
 ```
 
-:::warning Security Risk
+:::warning[Security Risk]
 Only enable `trustProxy` when actually behind a proxy. Otherwise, clients can spoof IP addresses through `X-Forwarded-For` headers.
 :::
 
@@ -329,7 +329,7 @@ hub:
       origin: true  # Reflects request origin
 ```
 
-:::danger Production Warning
+:::danger[Production Warning]
 Never use `origin: true` or `origin: '*'` in production. Always specify allowed origins explicitly.
 :::
 
@@ -473,7 +473,7 @@ chmod 750 logs/
 
 ### Internal Services
 
-**AI-Link Port:** Never expose externally
+**AI-Link Port:** Never expose externally. Only relevant while legacy targets are configured:
 
 ```yaml
 hub:
@@ -583,13 +583,18 @@ Mount configuration as read-only:
 
 ### Data Residency
 
-Configure providers with appropriate regions:
+Configure providers with appropriate regions. Data residency is decided by the resource or region the target addresses — `settings.resourceName` for Azure OpenAI, `settings.region` for AWS Bedrock, `settings.location` for Google Vertex AI:
 
 ```yaml
-targets:
+aiTargets:
   - id: azure-eu
-    provider: azure-openai
-    azureRegion: westeurope
+    provider: azure
+    apiKey: ${AZURE_OPENAI_API_KEY}
+    settings:
+      resourceName: my-westeurope-resource
+      apiVersion: ${AZURE_OPENAI_API_VERSION}
+    options:
+      model: ${AZURE_OPENAI_DEPLOYMENT}
 ```
 
 ### Audit Logging

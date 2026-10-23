@@ -6,7 +6,7 @@ sidebar_position: 1
 
 Full-duplex voice session routed through ProActions Hub (WebSocket only — a proxy cannot relay WebRTC media). Same capabilities as OPENAI_VOICE_AGENT but uses Hub for centralized API key management and request routing.
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_VOICE_AGENT`.
 :::
 

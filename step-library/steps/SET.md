@@ -79,21 +79,21 @@ Reads values from resolved expressions/templates and from nested `steps`. Writes
 
 ## Common Pitfalls
 
-:::warning Don't confuse new syntax with legacy syntax - mixing them causes unexpected behavior
+:::warning[Don't confuse new syntax with legacy syntax - mixing them causes unexpected behavior]
 
 **Why:** SET supports two different syntaxes: direct properties (new) and name/text (legacy). Mixing them can create unintended variables or overwrite data.
 
 **Solution:** Use new syntax for most cases (simpler): `SET userId: "123"`. Use legacy syntax only when needed for compatibility: `SET name: "userId" text: "123"`.
 :::
 
-:::warning Don't forget that template strings are resolved - use raw_text for literal strings
+:::warning[Don't forget that template strings are resolved - use raw_text for literal strings]
 
 **Why:** The `text` property resolves \{\{ \}\} templates. If your string contains \{\{ or \}\}, it will be interpreted as a template.
 
 **Solution:** Use `raw_text` for literal strings that contain \{\{ or \}\} characters, or escape them in templates.
 :::
 
-:::warning Don't use convertTo — it's deprecated and unnecessary
+:::warning[Don't use convertTo — it's deprecated and unnecessary]
 
 **Why:** Whole-string \{\{ … \}\} templates now return native types automatically. \{\{ flowContext.count + 1 \}\} yields a number; \{\{ flowContext.flag \}\} yields a boolean; \{\{ flowContext.items \}\} yields the actual array reference.
 

@@ -10,6 +10,7 @@ All notable changes to ProActions are documented in this file.
 
 ### What's New in 1.3.0 (April, 2026)
 
+- ⚠️ **ProActions Hub: legacy AI-Link `targets` deprecated** — migrate Hub configurations to `aiTargets`; see the [migration guide](./hub/config/ai-link-migration.md).
 - 🎙️ **Voice Agents** — new `OPENAI_VOICE_AGENT` / `HUB_VOICE_AGENT` steps for full-duplex spoken conversations via the OpenAI Realtime API. Direct OpenAI sessions default to WebRTC with automatic WebSocket fallback; Hub sessions use its Realtime WebSocket relay. Tool calling, skills, and dynamic tool discovery all work mid-session. `vad: { type: push_to_talk }` disables automatic turn detection in favor of an explicit hold-to-talk control in the voice bar.
 - 🧰 **StoryEditor** — a curated, task-level tool provider for editorial agents: safe validated text edits (`searchAndReplaceText`, `appendParagraph`), semantic named fields (`getField`/`setField`), and visual marking (`markSegments`/`clearMarks`) — no custom scripts needed.
 - 📝 **Story Text Edits** — new `GET_STORY_BLOCKS` / `APPLY_TEXT_EDITS` steps and `response_format: text_edits` for whole-story LLM edits (proofreading, style, structure, fact-check notes). The model edits numbered blocks; links, captions, embedded objects and placeholders stay protected, and invalid edits change nothing. Preview, apply, or let the editor choose in a Flow Monitor checklist.
@@ -66,7 +67,7 @@ All notable changes to ProActions are documented in this file.
 - **Form Enhancements** (1.0.10) - Rich form components (HTML, Markdown, Diff)
 - **Progress Bars** (1.0.8) - Visual feedback for long-running workflows
 - **Context Menus** (1.0.7) - Text selection and one-click menus
-- **ProActions Hub** - Centralized API key management for 40+ AI providers
+- **ProActions Hub** - Centralized API key management for 17 native AI providers plus any OpenAI-compatible endpoint
 - **Multi-Language Support** - English, Spanish, French, Italian, German
 
 ---
@@ -92,6 +93,10 @@ All notable changes to ProActions are documented in this file.
 ## Detailed Release Notes
 
 ### 1.3.0 - (unreleased)
+
+:::warning[ProActions Hub — legacy targets deprecated]
+ProActions Hub 1.3.0 moves AI-Link to a new, built-in AI engine. Provider entries in the legacy `targets:` section are deprecated and will be removed in a future release, and every request served by one now logs a deprecation warning. Migrate those entries to `aiTargets` — same `x-target` ids, no client change — following the [Hub migration guide](./hub/config/ai-link-migration.md); Hub-side changes are summarized in the [Hub Release Notes](./hub/release-notes.md).
+:::
 
 **🎙️ Voice Agents**
 
@@ -1590,6 +1595,13 @@ New steps for image processing:
 - Find-and-replace `actionContext.` → `flowContext.` across all YAML configs.
 - Affects both `{actionContext.X}` and `{{ actionContext.X }}` forms.
 - The two were exact synonyms; replacement is mechanical and safe.
+
+**⚠️ ProActions Hub legacy `targets` deprecated (Action Required for Hub operators)**
+
+- Add an `aiTargets` entry for each legacy `targets` entry, **keeping the same `id`** — `aiTargets` take priority on an id collision, so flows and clients keep working unchanged.
+- ProActions YAML needs no change: `SERVICES.*.target:` and per-step `target:` values still match the same id.
+- Remove the legacy entries once each migrated target is verified; the legacy AI gateway is then no longer started and `/ready` reports its `ai_gateway` check as `skipped`.
+- See the [Hub migration guide](./hub/config/ai-link-migration.md) for per-provider field mappings (OpenAI, AWS Bedrock, Anthropic, Google Gemini / Vertex AI).
 
 ### Upgrading to 1.1.0
 

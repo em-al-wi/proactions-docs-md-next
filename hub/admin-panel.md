@@ -37,7 +37,7 @@ https://swing.your-env.em-cms.cloud/swing/proactions/admin/panel
 
 Enter your admin key in the login screen and click **Sign In**.
 
-:::warning Key Length Requirement
+:::warning[Key Length Requirement]
 Admin API keys must be at least 32 characters long. Shorter keys are rejected during configuration validation.
 :::
 
@@ -91,7 +91,7 @@ auth:
 
 When `allowedNetworks` is configured, requests from non-listed IPs receive a `403 Forbidden` response.
 
-:::tip Reverse Proxy
+:::tip[Reverse Proxy]
 If ProActions Hub is behind a reverse proxy, enable `hub.security.trustProxy` so the guard uses the real client IP from `X-Forwarded-For` instead of the proxy IP.
 :::
 
@@ -115,7 +115,7 @@ auth:
 
 ## Dashboard Tabs
 
-The admin panel organizes information into six tabs.
+The admin panel organizes information into seven tabs.
 
 ### Dashboard
 
@@ -123,21 +123,35 @@ Overview of the running instance:
 
 - **Process information** — PID, hostname, Node.js version, uptime, platform
 - **Memory usage** — RSS, heap used, heap total, external
-- **Configuration summary** — counts for configured targets, proxies, tools, and MCP servers
+- **Configuration summary** — counts of AI targets (`aiTargets`), legacy targets, guardrails, proxies, tools and MCP servers
+- **Request totals and top targets** — selection counts by type (legacy targets, AI targets, proxies, tools, MCP) and a top-8 targets table marking each target as new engine or legacy
 - **Runtime usage charts** — visual breakdown of request distribution across providers and proxies
 
 ### AI-Link
 
 AI provider usage metrics collected in real time:
 
-- **Summary cards** — total requests, token usage, streaming ratio, error rate, active models
+- **Summary cards** — total requests, token usage, streaming ratio, error rate, active models, and **fallback attempts** (extra composite attempts, i.e. requests recorded by N−1 when a composite retried or fell back N times)
 - **Token usage by provider** — horizontal stacked bar chart (prompt vs completion tokens)
 - **Latency by model** — average response time with min/max range
 - **Finish reason distribution** — doughnut chart showing completion, stop, length, etc.
 - **Detailed tables** — per-provider, per-model, and per-action breakdowns with tokens, errors, and latency
-- **Configured targets** — table showing all AI targets from configuration
+- **AI Targets** — table of configured `aiTargets` entries with their provider or composite strategy, model, guardrails, Realtime flag, timeout, and per-target request/last-used counters
+- **Guardrails** — table of configured guardrails with per-guardrail `checks`, `flagged`, `denied`, `redacted`, `logged`, and `checkErrors` counters
+- **Configured targets** — table showing all legacy AI targets from configuration
 
 When no AI-Link requests have been made yet, a placeholder card is shown.
+
+### Realtime
+
+Voice-agent relay diagnostics:
+
+- **Relay status** — enabled/disabled, and the configured Realtime targets (id only)
+- **Live sessions** — currently open sessions with request ID, target, model, correlation labels, start time, age, and directional bytes
+- **Aggregates** — pending/active/admitted/rejected/completed/failed totals, directional bytes, duration summaries, and rejection/close categories
+- **Token accounting** — totals split by modality (input text/audio/image, cached, output text/audio), provider-response `status` distribution, input-audio transcription usage, and per-target/per-model breakdowns of sessions, responses, tokens, bytes and duration
+
+Aggregates cover closed sessions only. Disabled Realtime shows a placeholder.
 
 ### Proxies
 
@@ -214,6 +228,23 @@ Returns process information, configuration summary, runtime usage, and MCP conne
   },
   "configurationSummary": {
     "targets": { "count": 5, "items": [...] },
+    "aiTargets": {
+      "count": 4,
+      "items": [
+        {
+          "id": "openai",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "guardrails": ["no-cc"],
+          "realtimeEnabled": false
+        }
+      ]
+    },
+    "guardrails": {
+      "count": 1,
+      "items": [{ "name": "no-cc", "type": "regex", "phase": "pre", "onFail": "deny" }]
+    },
+    "realtime": { "enabled": false, "count": 0, "items": [] },
     "proxies": { "count": 2, "items": [...] },
     "tools": { "count": 1, "items": [...] },
     "mcp": { "count": 3, "items": [...] }
@@ -248,7 +279,7 @@ Clears all runtime usage counters and resets the uptime anchor. This action is l
 }
 ```
 
-:::info Audit Trail
+:::info[Audit Trail]
 Every statistics reset is logged with the admin identity and client IP address for audit purposes.
 :::
 

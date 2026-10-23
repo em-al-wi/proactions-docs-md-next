@@ -6,7 +6,7 @@ sidebar_position: 1
 
 ProActionsHub-compatible speech generation step. Inherits behavior from OPENAI_SPEECH.
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_SPEECH`.
 :::
 
@@ -29,7 +29,7 @@ Reads `text` or its configured input name. Writes generated audio to `blob` or i
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
-| `model` | Model id to use for TTS (e.g. tts-1) | None |false| false |None|None|
+| `model` | Model id to use for TTS (e.g. gpt-4o-mini-tts) | None |false| false |None|None|
 | `voice` | Voice id to use for synthesis | None |false| false |None|None|
 | `response_format` | Response audio format (e.g. mp3, wav, pcm) | None |false| false |None|None|
 | `speed` | Playback speed multiplier (e.g. 1.0) | None |false| false |None|None|
@@ -51,7 +51,7 @@ Reads `text` or its configured input name. Writes generated audio to `blob` or i
 ### Synthesize simple text to MP3
 ```yaml
 - step: HUB_SPEECH
-  model: "tts-1"
+  model: "gpt-4o-mini-tts"
   voice: "alloy"
   response_format: "mp3"
 ```

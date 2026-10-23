@@ -213,7 +213,7 @@ Block modules are standalone YAML files that define reusable constants, vars, fl
 # lib/common.ai-kit.module.yaml
 blocks:
   constants:
-    defaultModel: gpt-4o
+    defaultModel: gpt-6.1-sol
     apiBase: /SysConfig/ProActions
 
   vars:

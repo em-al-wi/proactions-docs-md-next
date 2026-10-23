@@ -332,7 +332,7 @@ AI_KIT:
 
 :warning: The text selection menu is deprecated from v1.1.0.
 
-:::danger Deprecated
+:::danger[Deprecated]
 The TEXT_MENU is deprecated from v1.1.0 and will be removed in v2.0.0. 
 Migrate to `swing.inlineMenu` (see [Native Swing Integrations](#native-swing-integrations-v110)).
 :::

@@ -6,7 +6,7 @@ sidebar_position: 1
 
 Chat/completion step that calls OpenAI (or Hub/Azure variants). Supports messages, images, audio, attachments, tools (functions), structured outputs (json_schema/json_object/list), reasoning and audio output. Many step-level configuration options are supported via cfg.*.
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_COMPLETION`.
 :::
 
@@ -218,14 +218,14 @@ See OPENAI_COMPLETION documentation for detailed data flow.
 
 ## Common Pitfalls
 
-:::warning Don't use HUB_COMPLETION if Hub is not deployed
+:::warning[Don't use HUB_COMPLETION if Hub is not deployed]
 
 **Why:** HUB_COMPLETION requires ProActions Hub middleware to be running and configured. Without it, requests will fail.
 
 **Solution:** Verify ProActions Hub is deployed and accessible before using HUB_COMPLETION. Use OPENAI_COMPLETION for direct API access.
 :::
 
-:::warning Don't mix HUB_COMPLETION and OPENAI_COMPLETION in same workflow without reason
+:::warning[Don't mix HUB_COMPLETION and OPENAI_COMPLETION in same workflow without reason]
 
 **Why:** Mixing can cause confusion and makes it harder to track which requests go through Hub vs direct.
 

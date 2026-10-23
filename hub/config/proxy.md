@@ -151,14 +151,14 @@ proxies:
 
 Usage:
 ```bash
-curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/proxy/forward/azure-openai/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview \
+curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/proxy/forward/azure-openai/openai/deployments/gpt-6.1-sol/chat/completions?api-version=2024-02-15-preview \
   -H "Content-Type: application/json" \
   -d '{
     "messages": [{"role": "user", "content": "Hello"}]
   }'
 ```
 
-:::tip AI-Link vs Proxy
+:::tip[AI-Link vs Proxy]
 For AI services, prefer using [AI-Link configuration](ai-link.md) which provides normalization and additional features. Use proxy for non-AI APIs or when you need direct passthrough.
 :::
 
@@ -185,7 +185,7 @@ Usage:
 curl -X POST http://localhost:${PROACTIONS_HUB_PORT}/proxy/forward/openai/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gpt-4o-mini",
+    "model": "gpt-6-luna",
     "messages": [{"role": "user", "content": "Hello"}]
   }'
 ```
@@ -265,7 +265,7 @@ proxies:
       router: true  # Custom routing logic
 ```
 
-:::info Advanced Routing
+:::info[Advanced Routing]
 For complex routing logic, you may need to extend the proxy controller. Contact your development team for custom implementations.
 :::
 

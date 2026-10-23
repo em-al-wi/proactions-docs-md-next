@@ -59,7 +59,7 @@ Interact with Large Language Models and AI services:
 - **HUB_COMPLETION**: Chat/completion via ProActions Hub (recommended)
 - **HUB_TRANSCRIPTION**: Audio-to-text transcription
 - **HUB_SPEECH**: Text-to-speech generation
-- **HUB_IMAGE_GENERATION**: Generate images with DALL·E
+- **HUB_IMAGE_GENERATION**: Generate images with OpenAI GPT Image models
 - **HUB_CONTENT_EXTRACTION**: Extract content from URLs
 - **OPENAI_COMPLETION**: Direct OpenAI integration
 - **OPENAI_ASSISTANT**: Use OpenAI Assistants

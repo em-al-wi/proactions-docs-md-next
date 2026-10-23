@@ -6,7 +6,7 @@ sidebar_position: 1
 
 Hub-compatible transcription step (delegates to hub service). Writes transcription text and optional segments list.
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_TRANSCRIPTION`.
 :::
 

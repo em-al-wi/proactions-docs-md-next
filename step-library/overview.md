@@ -148,7 +148,7 @@ Prime: Supports paths, UUIDs, and LOIDs (auto-formatted). Options insertionType,
 
 - **[OPENAI_DELETE_THREAD](./steps/OPENAI_DELETE_THREAD.md)** - Delete a thread using its id. Provide the thread object or id via inputs.
 
-- **[OPENAI_IMAGE_GENERATION](./steps/OPENAI_IMAGE_GENERATION.md)** - Generate images using OpenAI image models (DALL·E and GPT-Image-1). Supports model, size, quality, count (n), response_format and other parameters. The generated images are stored in the configured output key or default `imageList`.
+- **[OPENAI_IMAGE_GENERATION](./steps/OPENAI_IMAGE_GENERATION.md)** - Generate images using OpenAI GPT Image models (default gpt-image-2.5-sunburst). Supports model, size, quality, count (n), output_format and background. The generated images are stored in the configured output key or default `imageList`.
 
 - **[OPENAI_SPEECH](./steps/OPENAI_SPEECH.md)** - Generate speech audio using the OpenAI Speech API (or corresponding Hub/Azure variants). Reads text from the default text input and returns an audio blob.
 
@@ -222,7 +222,7 @@ Prime: Supports paths, UUIDs, and LOIDs (auto-formatted). Options insertionType,
 
 - **[MONITOR_TABLE](./steps/MONITOR_TABLE.md)** - Display tabular structured data in the Flow Monitor.
 
-- **[PLAY_AUDIO](./steps/PLAY_AUDIO.md)** - Plays audio in a lightweight floating player. Audio source can be provided as a data URL, http(s) URL, or raw base64 via `cfg.in` or via the default text input. The step mounts a closed Shadow DOM audio player and resolves when the player is closed by the user.
+- **[PLAY_AUDIO](./steps/PLAY_AUDIO.md)** - Plays audio in a lightweight floating player. Audio source can be provided as a data URL, http(s) URL, raw base64 or a Blob (e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH) via `cfg.in`, or via the default text input. The step mounts a closed Shadow DOM audio player and resolves when the player is closed by the user.
 
 - **[PROMPT](./steps/PROMPT.md)** - Shows a simple prompt to the user and stores the entered text into the default text output.
 

@@ -364,7 +364,7 @@ Display tabular structured data in the Flow Monitor.
 
 ### [PLAY_AUDIO](./steps/PLAY_AUDIO.md)
 
-Plays audio in a lightweight floating player. Audio source can be provided as a data URL, http(s) URL, or raw base64 via `cfg.in` or via the default text input. The step mounts a closed Shadow DOM audio player and resolves when the player is closed by the user.
+Plays audio in a lightweight floating player. Audio source can be provided as a data URL, http(s) URL, raw base64 or a Blob (e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH) via `cfg.in`, or via the default text input. The step mounts a closed Shadow DOM audio player and resolves when the player is closed by the user.
 
 
 

@@ -726,9 +726,8 @@ Provide sensible defaults:
 ```yaml
 - step: HUB_COMPLETION
   instruction: 'Generate content'
-  model: 'gpt-4'
+  model: 'gpt-6-luna'
   options:
-    temperature: 0.7
     max_tokens: 500
 ```
 

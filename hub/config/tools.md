@@ -323,7 +323,7 @@ The tools module is designed to be extensible. Future tools might include:
 - Video processing
 - Document conversion
 
-:::info Custom Tools
+:::info[Custom Tools]
 Contact your development team if you need custom tools added to the module.
 :::
 

@@ -72,12 +72,12 @@ hub:
 Add at least one AI service target to enable AI-Link functionality:
 
 ```yaml
-targets:
+aiTargets:
   - id: openai
     provider: openai
     apiKey: ${OPENAI_API_KEY}
     options:
-      model: gpt-4o-mini
+      model: gpt-6-luna
       max_completion_tokens: 12000
 ```
 
@@ -109,7 +109,7 @@ EDAPI_URL=https://your-edapi-instance/edapi
 PROACTIONS_SESSION_SECRET=your-random-secret-here
 ```
 
-:::warning Production Security
+:::warning[Production Security]
 Always use a strong, randomly-generated session secret in production. Never commit secrets to version control.
 :::
 
@@ -157,7 +157,7 @@ Mount your configuration file into the container:
 ./config.yaml:/usr/src/app/dist/config.yaml:ro
 ```
 
-:::tip Read-Only Mount
+:::tip[Read-Only Mount]
 The configuration file should be mounted read-only (`:ro`) for security.
 :::
 
@@ -230,7 +230,7 @@ healthCheck:
 ### Endpoints
 
 - **Liveness:** `GET /health` - Returns 200 if the application is running
-- **Readiness:** `GET /ready` - Returns 200 if AI-Link service is healthy
+- **Readiness:** `GET /ready` - Returns 200 when the memory and disk checks, MCP, the Realtime listener (when enabled), and — only when legacy `targets` exist — the legacy AI gateway are healthy
 
 ### Load Balancer Integration
 
@@ -259,7 +259,7 @@ Environment variables:
 PROACTIONS_SKIP_SCHEMA_VALIDATION=false
 ```
 
-:::warning Production Warning
+:::warning[Production Warning]
 Never skip validation in production environments. Validation catches configuration errors early.
 :::
 
@@ -303,7 +303,7 @@ swagger:
 
 Access at: `http://localhost:${PROACTIONS_HUB_PORT}/docs`
 
-:::tip Development Only
+:::tip[Development Only]
 Disable Swagger in production environments
 :::
 
@@ -325,12 +325,12 @@ Below is the complete path from Hub configuration to a working YAML action.
 
 ```yaml
 # config.yaml (on the Hub server)
-targets:
+aiTargets:
   - id: openai          # logical name you choose — used as "target" in YAML
     provider: openai
     apiKey: ${OPENAI_API_KEY}
     options:
-      model: gpt-4o-mini
+      model: gpt-6-luna
       max_completion_tokens: 12000
 ```
 
@@ -385,13 +385,17 @@ actions:
 
 ```yaml
 # config.yaml on the Hub server
-targets:
+aiTargets:
   - id: openai-realtime
     provider: openai
     apiKey: ${OPENAI_API_KEY}
     options:
-      model: gpt-realtime-2
+      model: gpt-realtime-2.1
+    realtime:
+      enabled: true
 ```
+
+The `hub.realtime` block (origin policy, safety secret, session and rate limits) must also be enabled, and main authentication must be `auth.type: token` or `edapi`. See [Realtime Relay](./config/realtime.md).
 
 ```yaml
 # /SysConfig/ProActions/services.ai-kit.services.yaml
@@ -399,7 +403,7 @@ HUB_REALTIME:
   # HUB_VOICE_AGENT appends /proactions/realtime.
   endpoint: '{BASE_URL}/swing'
   target: openai-realtime
-  model: gpt-realtime-2
+  model: gpt-realtime-2.1
 ```
 
 ```yaml
@@ -410,10 +414,10 @@ HUB_REALTIME:
     Call end_session only after the user confirms they are done.
 ```
 
-Before enabling this flow, verify that the deployed Hub version includes the Realtime relay. The Hub or its ingress must:
+Before enabling this flow, verify that the deployed Hub version includes the Realtime relay. Requires ProActions Hub 1.3.0 or later. The Hub or its ingress must:
 
 - Expose `WSS /proactions/realtime`
-- Accept the CMS EDAPI bearer token and target metadata sent through `Sec-WebSocket-Protocol`
+- Accept the EDAPI or Hub token and target metadata sent through `Sec-WebSocket-Protocol`
 - Preserve WebSocket upgrade and subprotocol headers through every reverse proxy
 - Use trusted TLS when the CMS is served over HTTPS
 - Allow long-lived connections for at least the configured voice-session duration
@@ -423,7 +427,7 @@ The client must run in Swing or Prime with an available EDAPI token. Browser CSP
 
 AI-Kit verifies both connection phases automatically before microphone capture: the browser-to-Hub upgrade must select the `realtime` subprotocol, and Hub must return OpenAI's `session.created` event within 15 seconds. Failures identify whether to inspect the relay/proxy/authentication phase or the target/credential/egress phase.
 
-Verify the deployment by starting a Hub voice flow with browser developer tools open. The Network panel must show `/proactions/realtime?model=...` upgrading with status `101` and selecting the `realtime` subprotocol. Hub logs must show the authenticated CMS user, selected target, and successful upstream OpenAI connection. Interpret `404` as a missing relay, `401`/`403` as EDAPI authentication or subprotocol-forwarding failure, and an upstream connection error as target credentials or egress failure. Use the Hub release supplied by your administrator that explicitly includes this relay; AI-Kit does not define a standalone Hub version number.
+Verify the deployment by starting a Hub voice flow with browser developer tools open. The Network panel must show `/proactions/realtime?model=...` upgrading with status `101` and selecting the `realtime` subprotocol. Hub logs must show the request ID, selected target and model (user identities are never logged), and successful upstream OpenAI connection. Interpret `404` as a missing relay, `401`/`403` as authentication or subprotocol-forwarding failure, and an upstream connection error as target credentials or egress failure.
 
 See [Voice Agents](../guides/configuration/voice-agents.md) for browser requirements, complete flow examples, VAD controls, tools, outputs, and troubleshooting.
 
@@ -434,18 +438,18 @@ default at the step level without changing the service declaration:
 
 ```yaml
 # config.yaml — two targets
-targets:
+aiTargets:
   - id: openai
     provider: openai
     apiKey: ${OPENAI_API_KEY}
     options:
-      model: gpt-4o
+      model: gpt-6.1-sol
 
   - id: claude
     provider: anthropic
     apiKey: ${ANTHROPIC_API_KEY}
     options:
-      model: claude-opus-4-5
+      model: claude-opus-5-5
 ```
 
 ```yaml
@@ -547,9 +551,9 @@ Fix the configuration error and restart the service.
 
 If `/health` returns non-200 status:
 
-1. Check that both main port and AI-Link port are available
-2. Review logs for AI-Link startup errors
-3. Verify network connectivity to AI providers
+1. `/health` is liveness only: a non-200 means the process itself is unhealthy — check the container logs for startup or configuration errors.
+2. For `/ready`, inspect the JSON body for the failing check. The legacy gateway check (`ai_gateway`) only applies while legacy `targets` exist; otherwise it reports `skipped: true`.
+3. Verify network connectivity to AI providers.
 
 ### Environment Variables Not Substituted
 

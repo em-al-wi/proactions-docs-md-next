@@ -40,7 +40,7 @@ YOUTUBE_MAIN_CLIENT_SECRET=your-client-secret
 YOUTUBE_MAIN_REDIRECT_URI=http://localhost:${PROACTIONS_HUB_PORT}/youtube/auth/google/callback?target=main
 ```
 
-:::warning Redirect URI
+:::warning[Redirect URI]
 The redirect URI must match exactly what is configured in Google Cloud Console, including the `target` query parameter.
 :::
 
@@ -190,7 +190,7 @@ Response:
 | `/youtube/auth/status` | GET | Check authentication status | No |
 | `/youtube/auth/logout` | POST | Revoke tokens | No |
 
-:::info Public Endpoints
+:::info[Public Endpoints]
 The callback endpoint (`/youtube/auth/google/callback`) is publicly accessible (does not require authentication) to receive OAuth redirects from Google.
 :::
 
@@ -335,7 +335,7 @@ services:
 podman run -v ./tokens:/usr/src/app/tokens:rw proactions-hub
 ```
 
-:::warning Persistence
+:::warning[Persistence]
 Tokens must be stored in a persistent volume. If the volume is lost, users will need to re-authenticate.
 :::
 

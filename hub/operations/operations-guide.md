@@ -55,7 +55,7 @@ sudo monit restart XXXX-YYY-methdig-worker_proactionshub
 sudo monit status XXXX-YYY-methdig-worker_proactionshub
 ```
 
-:::info Monit Configuration
+:::info[Monit Configuration]
 Replace `XXXX-YYY` with the actual server identifier from your monit configuration.
 :::
 
@@ -138,8 +138,8 @@ Expected response:
 {"status":"ready"}
 ```
 
-:::warning AI-Link Health
-The `/ready` endpoint checks if the AI-Link service is healthy. A failure indicates the AI-Link subprocess is not responding.
+:::warning[AI-Link Health]
+`/ready` checks the legacy AI gateway (`ai_gateway`) only when legacy `targets` are configured. An `aiTargets`-only deployment never starts that subprocess and reports the check as healthy with `skipped: true`; a failure there means the gateway was expected to start but is not responding.
 :::
 
 ### Load Balancer Integration
@@ -422,7 +422,8 @@ podman logs proactionshub | grep -i "ailink\|ai-link"
 
 **Common Causes:**
 
-1. **AI-Link subprocess not starting:**
+1. **AI-Link subprocess not starting (only when legacy `targets` exist):**
+   - The legacy AI gateway is only started if at least one legacy `targets` entry is configured; with an `aiTargets`-only config its check reports `skipped: true` and this cause does not apply
    - Check logs for AI-Link startup errors
    - Verify Node.js is available in container
    - Check ailink_port is not in use
@@ -710,12 +711,20 @@ hub:
 
 **Configure appropriate request timeouts per target:**
 ```yaml
-targets:
+aiTargets:
   - id: fast-model
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
     requestTimeout: 30000  # 30 seconds
+    options:
+      model: gpt-6-luna
 
   - id: slow-model
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
     requestTimeout: 300000  # 5 minutes
+    options:
+      model: gpt-6-astra
 ```
 
 ### Resource Limits

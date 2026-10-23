@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # PLAY_AUDIO
 
-Plays audio in a lightweight floating player. Audio source can be provided as a data URL, http(s) URL, or raw base64 via `cfg.in` or via the default text input. The step mounts a closed Shadow DOM audio player and resolves when the player is closed by the user.
+Plays audio in a lightweight floating player. Audio source can be provided as a data URL, http(s) URL, raw base64 or a Blob (e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH) via `cfg.in`, or via the default text input. The step mounts a closed Shadow DOM audio player and resolves when the player is closed by the user.
 
 ## At a glance
 - **Category** UI
@@ -14,16 +14,16 @@ Plays audio in a lightweight floating player. Audio source can be provided as a 
 
 ## When to Use
 
-Use **PLAY_AUDIO** to present a data URL, HTTP(S) URL, or base64 audio source for user playback before continuing.
+Use **PLAY_AUDIO** to present a data URL, HTTP(S) URL, base64 audio source or Blob (e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH) for user playback before continuing.
 
 ## Data Flow
 
-Reads a resolved `in` value or `text` input as the audio source. Does not write flow context.
+Reads a resolved `in` value (string or Blob, e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH) or `text` input as the audio source. Does not write flow context.
 
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
-| `in` | Optional input path or variable name containing the audio source (data URL, http(s) URL or raw base64). If omitted, the default text input is used. | None |false| true |None|None|
+| `in` | Optional input path or variable name containing the audio source (data URL, http(s) URL, raw base64 or a Blob, e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH). If omitted, the default text input is used. | None |false| true |None|None|
 | `autoplay` | Attempt autoplay on load. Note: browsers may block autoplay; in that case the player will show a hint and wait for user interaction. | true |false| false |None|None|
 | `showProgress` | Show progress / seek bar in the player. | true |false| false |None|None|
 | `showVolume` | Show volume controls in the player. | true |false| false |None|None|
@@ -37,7 +37,7 @@ Reads a resolved `in` value or `text` input as the audio source. Does not write 
 ## Inputs
 | Type | Description | Default | Required | Resolved |
 |---|---|:---:|:---:|:---:|
-| `text` | Audio source as data URL, http(s) URL, or raw base64. If omitted, reads from `in` config or default text input. | None | false | false |
+| `text` | Audio source as data URL, http(s) URL, raw base64 or a Blob (e.g. `in: '{{ flowContext.blob }}'` after HUB_SPEECH). If omitted, reads from `in` config or default text input. | None | false | false |
 
 ## Examples
 

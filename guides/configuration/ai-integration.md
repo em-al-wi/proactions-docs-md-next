@@ -60,7 +60,7 @@ Both `behavior` and `instruction` support template variables:
 
 | Option  | Type   | Description                                     |
 | ------- | ------ | ----------------------------------------------- |
-| `model` | string | Model ID to use (e.g., `gpt-4o`, `gpt-4-turbo`) |
+| `model` | string | Model ID to use (e.g., `gpt-6.1-sol`, `gpt-6-luna`) |
 
 For Azure deployments, the `deploymentId` from the service configuration is used instead.
 
@@ -932,12 +932,12 @@ When a tool fails:
 Request audio responses from the model:
 
 ```yaml
-- step: HUB_COMPLETION
+- step: OPENAI_COMPLETION
   instruction: 'Explain quantum computing in simple terms'
   outputAudio:
     voice: 'alloy' # alloy, echo, fable, onyx, nova, shimmer
     format: 'mp3' # mp3, opus, aac, flac, wav, pcm
-  model: 'gpt-4o-audio-preview'
+  model: 'gpt-audio-1.5'
 ```
 
 Outputs:
@@ -945,33 +945,37 @@ Outputs:
 - `flowContext.audio` - Audio data URL
 - `flowContext.audio_transcript` - Text transcript (if provided)
 
-### Combined Text and Audio Output
+:::note[Hub targets]
+`outputAudio` needs a model that returns audio from Chat Completions. Through the Hub this works only with a legacy target: `aiTargets` drop `modalities` and `audio`. On `aiTargets`, generate the text with `HUB_COMPLETION` and voice it with `HUB_SPEECH`, as below.
+:::
+
+### Spoken Image Description
 
 ```yaml
 - step: HUB_COMPLETION
-  behavior: 'Create an audio description of the image'
+  behavior: 'Describe the image for a listener in three sentences.'
   instruction: '{{ flowContext.text }}'
   image: '{{ flowContext.blob }}'
-  outputAudio:
-    voice: alloy
-    format: mp3
-  model: gpt-4o-mini-audio-preview-2024-12-17
+  model: gpt-6-luna
+
+- step: HUB_SPEECH
+  model: gpt-4o-mini-tts
+  voice: alloy
 
 - step: PLAY_AUDIO
-  in: '{{ flowContext.audio }}'
+  in: '{{ flowContext.blob }}'
 ```
 
 ## Reasoning Models
 
-For models that support reasoning (e.g., o1, o3):
+For models that support reasoning (e.g., GPT-6 Astra, GPT-6.1 Sol):
 
 ```yaml
 - step: HUB_COMPLETION
   instruction: 'Solve this complex problem: ...'
   options:
-    reasoning:
-      effort: 'low' # Model-specific reasoning configuration
-  model: 'o1'
+    reasoning_effort: 'low' # none | minimal | low | medium | high | xhigh | max (model-dependent)
+  model: 'gpt-6-astra'
 ```
 
 The reasoning output (if provided) is available in `flowContext.reasoning`.
@@ -1257,15 +1261,15 @@ OPENAI_COMPLETION:
   type: completion
   apiKey: sk-...
   endpoint: 'https://api.openai.com/v1'
-  model: gpt-4o
+  model: gpt-6.1-sol
   options:
-    temperature: 0.7
+    reasoning_effort: low
 
 AZURE_OPENAI_COMPLETION:
   type: completion
   endpoint: 'https://your-resource.openai.azure.com'
   apiKey: '...'
-  deploymentId: 'gpt-4o'
+  deploymentId: 'gpt-6.1-sol'
   apiVersion: '2024-02-15-preview'
 ```
 
@@ -1350,25 +1354,21 @@ AZURE_OPENAI_COMPLETION:
     Include all visible elements, text, context, and meaning.
   image: '{{ flowContext.blob }}'
 
-- step: HUB_COMPLETION
-  behavior: 'Create an audio version of this description.'
-  instruction: '{{ flowContext.text }}'
-  outputAudio:
-    voice: alloy
-    format: mp3
-  model: gpt-4o-mini-audio-preview-2024-12-17
+- step: HUB_SPEECH
+  model: gpt-4o-mini-tts
+  voice: alloy
 
 - step: PLAY_AUDIO
-  in: '{{ flowContext.audio }}'
+  in: '{{ flowContext.blob }}'
 ```
 
 ## Best Practices
 
 ### 1. Use Appropriate Models
 
-- Use smaller/faster models (`gpt-4o-mini`) for simple tasks
-- Use larger models (`gpt-4o`, `gpt-4-turbo`) for complex reasoning
-- Use specialized models for audio (`gpt-4o-audio-preview`) or vision tasks
+- Use smaller/faster models (`gpt-6-luna`) for simple tasks
+- Use larger models (`gpt-6.1-sol`, `gpt-6-astra`) for complex reasoning
+- Use specialized models for audio (`gpt-audio-1.5`) or vision tasks
 
 ### 2. Optimize Prompts
 

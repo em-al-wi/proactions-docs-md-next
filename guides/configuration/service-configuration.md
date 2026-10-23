@@ -28,7 +28,7 @@ AI_KIT:
 
 ## ProActions Hub (Recommended)
 
-ProActions Hub is the recommended way to configure services. It provides centralized API key management and support for 40+ AI providers.
+ProActions Hub is the recommended way to configure services. It provides centralized API key management and support for 17 native AI providers plus any OpenAI-compatible endpoint.
 
 ### Basic Hub Configuration
 
@@ -81,13 +81,13 @@ Voice agents use persistent Realtime connections and require dedicated base endp
 HUB_REALTIME:
   endpoint: '{BASE_URL}/swing' # produces /swing/proactions/realtime
   target: openai-realtime
-  model: gpt-realtime-2
+  model: gpt-realtime-2.1
 
 # Direct OpenAI (not recommended because the API key reaches the browser)
 OPENAI_REALTIME:
   endpoint: 'https://api.openai.com' # no trailing /v1
   apiKey: 'sk-...'
-  model: gpt-realtime-2
+  model: gpt-realtime-2.1
 ```
 
 `HUB_REALTIME.target` must be backed by an OpenAI Realtime-capable Hub target, and the Hub deployment must provide the `/proactions/realtime` WebSocket relay. Voice steps do not inherit `defaultBehavior`; configure `behavior` on each voice step. See [Voice Agents](./voice-agents.md) for the complete Hub, browser, network, and flow setup.

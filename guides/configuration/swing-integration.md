@@ -1181,7 +1181,7 @@ const response = await aikit.executeChatCompletion(
     serviceName: "HUB",
     completionType: "HUB_COMPLETION",
     includeFullResponse: true,
-    model: "gpt-4o",
+    model: "gpt-6.1-sol",
     ctx: currentSwingContext,
   }
 );
@@ -1199,7 +1199,7 @@ console.log(response.response);    // Full API response (if includeFullResponse:
   - `serviceName`: Which service to use (default: `"HUB"`)
   - `completionType`: Which completion step to use (default: `"HUB_COMPLETION"`)
   - `includeFullResponse`: Include full API response (default: `false`)
-  - `model`: Override the model (e.g., `"gpt-4o"`, `"gpt-4-turbo"`)
+  - `model`: Override the model (e.g., `"gpt-6.1-sol"`, `"gpt-6-astra"`)
   - `flowContext`: Existing flow context to populate
   - `cfg`: Additional step configuration options
 
@@ -1218,11 +1218,10 @@ const response = await aikit.executeChatCompletion(
   "Extract key information from the article",
   {
     serviceName: "HUB",
-    model: "gpt-4o",
+    model: "gpt-6.1-sol",
     cfg: {
       response_format: "json_object",
       options: {
-        temperature: 0.2,
         max_tokens: 500,
       },
     },
@@ -1270,7 +1269,7 @@ $("#generateKeywords").click(async function () {
     "Extract 5-10 relevant keywords from this article content",
     {
       systemPrompt: "You are an SEO expert. Return only comma-separated keywords.",
-      model: "gpt-4o-mini",
+      model: "gpt-6-luna",
       ctx: ctx, // Swing Context
     }
   );

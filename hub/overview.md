@@ -19,16 +19,28 @@ ProActions Hub acts as a normalization layer and secure gateway between your app
 
 ### AI Service Integration (AI-Link)
 
-The AI-Link module provides a unified gateway to multiple AI providers including:
+The AI-Link module provides a unified gateway to multiple AI providers. AI-Link targets (`aiTargets`) run on the Hub's new built-in AI engine:
 
 - **OpenAI** - GPT models and image generation
-- **Azure OpenAI** - Microsoft-hosted OpenAI services
+- **Azure OpenAI** - Microsoft-hosted OpenAI services, with API key or Microsoft Entra ID authentication
 - **Anthropic** - Claude models
-- **AWS Bedrock** - Amazon's AI service platform
-- **Google Vertex AI / Gemini** - Google's AI services
-- **50+ Additional Providers** - Including Perplexity, OpenRouter, Mistral, Groq, and more
+- **AWS Bedrock** - static keys, IAM role assumption, or the default AWS credential chain
+- **Google** - both the Gemini API and Vertex AI
+- **Mistral, Groq, DeepSeek, xAI, Cohere, Together AI, Fireworks, Perplexity, Hugging Face, OpenRouter** - native providers
+- **Any OpenAI-compatible endpoint** - Writer, Langdock, Ollama, Azure AI Inference, and similar
 
-All providers are accessed through consistent OpenAI-compatible endpoints (`/v1/chat/completions`, `/v1/images/generations`, etc.), with the AI-Link handling provider-specific authentication and request formatting.
+All providers are accessed through consistent OpenAI-compatible endpoints (`/v1/chat/completions`, `/v1/images/generations`, `/v1/responses`, …), with AI-Link handling provider-specific authentication and request formatting.
+
+Additional AI-Link capabilities:
+
+- **Composite routing** - one target id fanning out to an ordered fallback list or a weighted load-balanced set
+- **Automatic retries** - retryable upstream failures retried with equal-jitter backoff, per target or globally
+- **Guardrails** - regex, length, JSON, PII, LLM-judge and moderation-API checks, with deny / redact / log actions
+- **Realtime voice relay** - authenticated WebSocket relay to the OpenAI Realtime API for `HUB_VOICE_AGENT`
+
+:::warning[Legacy targets are deprecated]
+The legacy `targets:` section (served by the legacy AI gateway) is deprecated and will be removed in a future release. Every request served by one logs a deprecation warning. See the [migration guide](./config/ai-link-migration.md).
+:::
 
 ### HTTP(s) Proxy
 
@@ -65,7 +77,8 @@ Host and connect to [Model Context Protocol (MCP)](https://modelcontextprotocol.
 
 Built-in browser-based dashboard for operations and diagnostics:
 
-- Real-time AI provider usage metrics (tokens, latency, error rates)
+- Real-time AI provider usage metrics (tokens, latency, error rates), including AI-target selections, guardrail counters and fallback attempts
+- Realtime relay status, live voice sessions, and per-modality token/byte accounting
 - MCP server health and per-tool invocation tracking
 - Full runtime configuration viewer (secrets redacted)
 - Secure stateless API key authentication, independent of the main auth system
@@ -99,6 +112,8 @@ Winston-based logging system with:
 The application consists of modular components:
 
 - AI-Link Module (unified AI gateway)
+- AI Engine Module (in-process `aiTargets` serving, routing, guardrails)
+- Realtime Module (voice WebSocket relay)
 - Proxy Module (HTTP forwarding)
 - YouTube Module (OAuth and uploads)
 - Tools Module (content extraction)
@@ -150,6 +165,6 @@ This documentation is organized into the following sections:
 3. **Security Hardening** - Best practices for production deployments
 4. **Operations Guide** - Maintenance, monitoring, and troubleshooting
 
-:::info Prerequisites
+:::info[Prerequisites]
 This documentation assumes you have already deployed ProActions Hub in a Docker or Podman environment. For installation procedures, please consult your deployment documentation or contact your system administrator.
 :::

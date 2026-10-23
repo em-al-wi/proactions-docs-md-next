@@ -56,7 +56,7 @@ HUB:
 
 - Centralized API key management
 - Secure - keys never exposed in configuration
-- Support for 40+ AI providers
+- Support for 17 native AI providers plus any OpenAI-compatible endpoint
 - See [Service Configuration Guide](../guides/configuration/service-configuration.md) for details
 
 ### Adding DeepL Translation

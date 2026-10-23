@@ -210,7 +210,7 @@ For enhanced service integration and secure API key management, consider install
 **ProActions Hub provides:**
 
 - Centralized API key management
-- Support for 40+ AI providers
+- Support for 17 native AI providers plus any OpenAI-compatible endpoint
 - Proxy configuration
 - Content extraction tools
 - EDAPI authentication

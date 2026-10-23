@@ -6,7 +6,7 @@ sidebar_position: 1
 
 Azure OpenAI transcription alias (delegates to the OpenAI transcription implementation).
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_TRANSCRIPTION`.
 :::
 

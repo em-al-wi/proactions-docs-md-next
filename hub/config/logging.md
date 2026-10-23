@@ -62,7 +62,7 @@ Example output:
   "message": "AI request completed",
   "module": "aiLink",
   "target": "openai",
-  "model": "gpt-4o-mini",
+  "model": "gpt-6-luna",
   "promptTokens": 15,
   "completionTokens": 25,
   "totalTokens": 40
@@ -115,7 +115,7 @@ logging:
 
 This sets the level for log types that don't specify their own level.
 
-:::tip Production Recommendation
+:::tip[Production Recommendation]
 Use `info` or `warn` in production. Use `debug` only for troubleshooting.
 :::
 
@@ -209,8 +209,9 @@ logging:
       console: true
       file: false
       level: info
-      logPrompt: false        # Include prompts in logs
+      logPrompt: false        # Include prompts and effective request params in logs
       logResponse: false      # Include responses in logs
+      logUpstream: false      # Include provider-native HTTP request/response bodies
 ```
 
 **Logged information:**
@@ -218,9 +219,16 @@ logging:
 - Model used
 - Token usage (prompt, completion, total)
 - Request duration
-- Optional: Full prompt and response
+- Optional: prompt, response, and upstream wire bodies
 
-**Example:**
+For `aiTargets`, three flags control the debug payloads attached to a request record (success or terminal error):
+
+| Flag          | Adds to the record | Contents                                                                                   |
+| ------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| `logPrompt`   | `ai.prompt`, `ai.requestParams` | The messages/input actually sent (after pre-phase guardrail redaction), and the effective request config — `options` merged with the body, minus content keys, plus `providerOptions` |
+| `logResponse` | `ai.response`      | The assembled text for a stream, or the response messages/output otherwise                  |
+| `logUpstream` | `ai.upstream.request`, `ai.upstream.response` | The provider-native wire bodies as posted by the SDK; on failure also the upstream error's `url`, `statusCode`, `requestBodyValues` and `responseBody` |
+
 ```json
 {
   "timestamp": "2024-01-15T10:30:00.123Z",
@@ -229,7 +237,7 @@ logging:
   "module": "aiLink",
   "target": "openai",
   "provider": "openai",
-  "model": "gpt-4o-mini",
+  "model": "gpt-6-luna",
   "promptTokens": 150,
   "completionTokens": 250,
   "totalTokens": 400,
@@ -237,8 +245,31 @@ logging:
 }
 ```
 
-:::warning Prompt/Response Logging
-Only enable `logPrompt` and `logResponse` for debugging. These logs can contain sensitive data and consume significant storage.
+Binary payloads (data URLs, long bare base64, `Buffer`/`Uint8Array`) are elided to a short placeholder; text is never truncated.
+
+#### Per-target overrides
+
+All three flags can be overridden per `aiTargets` entry, including on a composite (whose values apply to its routes):
+
+```yaml
+aiTargets:
+  - id: openai
+    provider: openai
+    apiKey: ${OPENAI_API_KEY}
+    debug:
+      logUpstream: true     # this target only
+    options:
+      model: gpt-6-luna
+```
+
+Precedence: route → composite → global. An explicit `false` on a target beats a broader `true`.
+
+:::warning[Prompt/Response/Upstream Logging]
+Only enable `logPrompt`, `logResponse` and `logUpstream` for debugging. These logs can contain sensitive data — including full provider request/response bodies — and consume significant storage.
+:::
+
+:::note[Legacy targets]
+`debug` and `logUpstream` apply to `aiTargets` only; legacy `targets:` entries ignore them. Every request served by a legacy target logs one `warn`-level `aiLink` line — `AI-Link request served via deprecated legacy target — migrate '<id>' to aiTargets` — so migration progress is visible without extra instrumentation.
 :::
 
 ### 4. Proxy Logs
@@ -449,7 +480,7 @@ logging:
 
 When `true`, error logs include full stack traces.
 
-:::warning Production Warning
+:::warning[Production Warning]
 Stack traces may expose sensitive information about your application's internal structure. Only enable for debugging.
 :::
 

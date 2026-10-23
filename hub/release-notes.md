@@ -4,6 +4,108 @@ title: ProActions Hub Release Notes
 sidebar_label: Hub Release Notes
 ---
 
+### 1.3.0 - (unreleased)
+
+:::warning[Legacy AI-Link `targets` are deprecated — action required]
+Provider entries declared under `targets:` (served by the legacy AI gateway) are deprecated and will be removed in a future release. They keep working in 1.3.x, but every request served by one now logs a deprecation warning naming its id. Migrate them to `aiTargets`; the [migration guide](./config/ai-link-migration.md) covers OpenAI, AWS Bedrock, Anthropic, and Google (both the Gemini API and Vertex AI), plus load balancing, failover and guardrail hooks.
+:::
+
+#### New Features
+
+##### New AI Engine (`aiTargets`)
+
+AI-Link moves to a new, built-in AI engine. Targets declared under `aiTargets` run on it directly inside the Hub — no separate gateway process — with native provider authentication, automatic retries, composite routing, guardrails and structured output. Same `x-target` header, same OpenAI wire format — no client change, and an `aiTargets` entry takes priority over a legacy target with the same id.
+
+- 17 native providers: OpenAI, Azure, Anthropic, Google, Vertex, Bedrock, Mistral, Groq, DeepSeek, xAI, Cohere, Together AI, Fireworks, Perplexity, Hugging Face, OpenRouter, and any OpenAI-compatible endpoint
+- Provider aliases keep legacy names working (`azure-openai`, `vertex-ai`, `gemini`, `amazon-bedrock`, …)
+- Per-target `settings`, `options`, `providerOptions`, `requestTimeout`, `retry`, `debug` and `guardrails`
+
+See [AI-Link Configuration](./config/ai-link.md).
+
+##### Composite Routing (fallback / loadbalance)
+
+One `x-target` id can fan out to an ordered fallback list or a weighted load-balanced set of concrete targets, with per-route weights.
+
+See [Routing, Retries & Timeouts](./config/ai-link-routing.md).
+
+##### Automatic Retries with Backoff
+
+Chat completions and the Responses API retry retryable upstream failures (429, 5xx, timeouts, network errors) by default: 3 total attempts with equal-jitter exponential backoff. Configurable globally under `hub.http_client.retry` and per target under `retry`; `retry: { maxAttempts: 1 }` restores single-shot behaviour.
+
+##### Guardrails
+
+Regex, length, JSON, PII, LLM-judge and moderation-API checks, applied before the request, after the response, or both, with `deny` / `redact` / `log` actions and a separate `onError` policy for check failures.
+
+See [Guardrails](./config/ai-link-guardrails.md).
+
+##### Responses API
+
+`POST /v1/responses` with function tools, `tool_choice`, `instructions`, `text.format` and SSE streaming (aiTargets only).
+
+##### Structured Output
+
+`response_format: json_object` / `json_schema` is now executed for chat completions and the Responses API, so the provider enforces the requested format.
+
+##### Images and Audio on `aiTargets`
+
+Image generation, audio speech, audio transcription and audio translation are served by `aiTargets`. Translation is available on `openai` and `openai-compatible` targets; unsupported provider/modality combinations return a clear `400`.
+
+##### Provider Authentication
+
+- Azure OpenAI through Microsoft Entra ID (`settings.useEntraId`) alongside static keys
+- AWS Bedrock through STS role assumption (`settings.roleArn`, optional `externalId`) — assumed credentials are cached, refreshed about 60 s before expiry, and concurrent requests share one refresh — or the default AWS credential chain
+- Vertex AI with automatic private-key normalization
+- Native Hugging Face and OpenRouter providers (OpenRouter no longer needs the OpenAI-compatible workaround)
+
+##### Debug Payload Logging
+
+`logging.types.aiLink.logUpstream` records the provider-native wire request/response bodies plus the upstream error body. All three payload flags (`logPrompt`, `logResponse`, `logUpstream`) can be overridden per target with `debug:`.
+
+See [Logging](./config/logging.md).
+
+##### Realtime Relay for Voice Agents
+
+An authenticated, server-managed WebSocket relay to the OpenAI Realtime API on `/realtime` and `/proactions/realtime`, with admission control, session limits, backpressure, heartbeats, graceful shutdown, and per-modality token accounting.
+
+See [Realtime Relay](./config/realtime.md).
+
+##### Admin Panel
+
+- New **Realtime** tab: relay status, live sessions, and aggregates by modality, duration and close category
+- AI-Link tab gains **AI Targets** and **Guardrails** tables and a **fallback attempts** metric
+- Dashboard shows AI-target selections and configured target/guardrail counts
+
+See [Admin Panel](./admin-panel.md).
+
+#### Improvements
+
+- The legacy AI gateway subprocess is only started when at least one legacy `targets` entry exists; an `aiTargets`-only deployment never spawns it
+- `/ready` reports the legacy gateway check (`ai_gateway`) as healthy with `skipped: true` when the gateway was intentionally not started
+- Every request served by a legacy target logs one `warn`-level `aiLink` line naming the target id, so migration progress is visible without extra instrumentation
+- `GET /` is public and returns the application name, version and description
+
+#### Fixes
+
+- Rate-limiting `windowMs` and `max` values coming from environment substitutions are coerced to integers, so windows now reset correctly
+- Proxy upstream errors return a `502` JSON body (`Proxy error: …`) instead of a generic error
+
+#### Infrastructure
+
+- NestJS 12
+- TypeScript 6
+- pnpm pinned through `packageManager`
+- UBI8 images on Node.js 22.23.2
+
+#### Deprecations
+
+- Legacy AI-Link `targets:` and their `config:` routing objects — migrate to `aiTargets`, see the [migration guide](./config/ai-link-migration.md)
+- `hub.ailink_*` settings are only used while legacy targets exist
+
+#### Documentation
+
+- New: AI-Link Configuration (rewritten around `aiTargets`), Migration to `aiTargets`, Routing & Retries, Guardrails, Realtime Relay, Legacy targets
+- Updated: overview, setup & configuration, admin panel, logging, operations guide, security hardening, voice agents guide, release notes
+
 ### 1.2.0 - 23/04/2026
 
 #### New Features

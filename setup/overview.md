@@ -34,7 +34,7 @@ ProActions provides:
 A server component that provides:
 
 - Centralized API key management
-- Unified interface for 40+ AI providers
+- Unified interface for 17 native AI providers plus any OpenAI-compatible endpoint
 - EDAPI-based authentication and access control
 - Proxy configuration
 - Content extraction tools

@@ -6,7 +6,7 @@ sidebar_position: 1
 
 ImageGeneration using Azure OpenAI.
 
-:::info Documentation Inheritance
+:::info[Documentation Inheritance]
 Documentation partly inherited from `OPENAI_IMAGE_GENERATION`.
 :::
 
@@ -29,22 +29,17 @@ Reads resolved `instruction` or `text`. Writes generated items to `outputKey` (d
 ## Config Options
 | Name | Description | Default | Required | Resolved | Constraints | Conditional Rules |
 |---|---|:---:|:---:|:---:|---|---|
-| `model` | Image model to use (gpt-image-1, dall-e-3, dall-e-2) | dall-e-3 |false| false |None|None|
+| `model` | Image model (default gpt-image-2.5-sunburst). Current OpenAI models: gpt-image-2.5-sunburst, gpt-image-2.5-flare, gpt-image-2, gpt-image-1.5, gpt-image-1-mini | gpt-image-2.5-sunburst |false| false |None|None|
 | `instruction` | The user prompt to send to the LLM (supports templates) | None |false| true |Length:1-∞|None|
-| `size` | Desired image size (model-dependent) | None |false| false |None|None|
-| `quality` | Image quality setting | None |false| false |None|None|
-| `n` | Number of images to generate (1-4; DALL·E3 supports 1) | 1 |false| false |Range:1-4|None|
-| `style` | Image style for DALL-E 3 (natural, vivid) | None |false| false |None|Conflicts: output_format|
-| `response_format` | DALL·E response format: 'url' or 'b64_json' (not supported for gpt-image-1) | None |false| false |None|Conflicts: output_format, background, seed|
-| `output_format` | Output format for gpt-image-1 only (png\|jpeg\|webp) | None |false| false |None|Conflicts: response_format, style|
-| `background` | Background setting for gpt-image-1 only (transparent) | None |false| false |None|Conflicts: response_format|
-| `seed` | Random seed for reproducible results (gpt-image-1 only) | None |false| false |None|Conflicts: response_format|
+| `size` | Image size: 1024x1024 (default), 1536x1024 (landscape) or 1024x1536 (portrait) | None |false| false |None|None|
+| `quality` | Image quality (default auto). 'xhigh' and 'max' require a GPT Image 2.5 model; other models receive 'high'. | None |false| false |None|None|
+| `n` | Number of images to generate (1-4) | 1 |false| false |Range:1-4|None|
+| `output_format` | Output file format: png (default), jpeg or webp | None |false| false |None|None|
+| `background` | Background: auto, transparent (needs output_format png or webp) or opaque | None |false| false |None|None|
 | `user` | User identifier for attribution and policy monitoring | None |false| false |None|None|
 | `timeoutMs` | Request timeout in milliseconds | 60000 |false| false |Range:1000-900000|None|
 | `maxRetries` | Maximum number of retries for recoverable errors | 2 |false| false |Range:-∞-20|None|
 | `outputKey` | FlowContext key where images will be stored (default: imageList) | imageList |false| false |Pattern: `^[a-zA-Z_][a-zA-Z0-9_]*$`<br/>Length:1-∞|None|
-
-### Step-Level Validation Rules
 
 ## Inputs
 | Type | Description | Default | Required | Resolved |
